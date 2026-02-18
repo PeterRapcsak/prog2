@@ -1,0 +1,19 @@
+
+neptun: T0R2E4
+
+1. A feladatot arch linuxon oldom meg.
+2. Létrehoztam a .cpp filet 
+3. g++ help-et lefuttattam, fent van a rendszeremen
+4. a parancsot lefuttattam, az inlcude le lett cserélve, a terminalban a legvégén ott van az én általam írt kód
+5. gy.cpp-t létrehoztam, ugyanezt csinálja, bemásolja az értéket a gyümölcsök helyére
+6. Létrehoztam a két file-t, a megadott módon fordítottam őket (ls parancs kiírja mindkét .o filet)
+7. összeállítottam a fileokat, ./main2 -vel futtattam
+8. ifndef BAR_H használattal ezt is megoldottam 
+9.  Lefuttattam a g++ -E main3.cpp parancsot, Az include guard miatt a bar.h tartalma csak egyszer másolódott be a kódba.
+    Próbából kitöröltem a guardot és a file tartalma kétszer kerult be.
+10.  a változót inicializálatlanul hagytam warningot kaptam
+11. -g = debug információkat fordít a kódba
+    -Werror = már egy warning is megszakítja a fordítást
+    -o0 = kikapcsolja a kod optimalizalast
+12. elkészítettem az auto.cpp filet a megadott kóddal együtt
+13. 98 és 03-nál hibát írt ki, az ennél újabbaknál lefutott, ezért a c++11-ben jött be az auto kulcsszó
