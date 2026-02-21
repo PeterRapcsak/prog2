@@ -13,15 +13,10 @@ void csere(int& a, int& b) {
 }
 
 double polinom(double x, double egyutthatok[], int fokszam){
-    int count = 0;
-    double eredmeny = 0;
-    
-     for (int i = fokszam - 1; i >= 0; i--){
-          eredmeny += egyutthatok[count] * pow(x, i);
-          count++;
-     }
-
-
+    double eredmeny = egyutthatok[fokszam];
+    for (int i = fokszam - 1; i >= 0; i--){
+        eredmeny = eredmeny * x + egyutthatok[i];
+    }
     return eredmeny;
 }
 

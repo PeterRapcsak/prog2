@@ -22,6 +22,7 @@ void csere(int& a, int& b);
 // egységben definiálni kell.
 inline int max(int a, int b) { return a > b ? a : b; }
 
+/// egy polinom helyettesitesi értékét számolja ki
 double polinom(double x, double egyutthatok[], int fokszam);
 
 /// Segédfüggvény double pontosságú számok összehasonlításához
