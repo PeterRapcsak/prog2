@@ -111,8 +111,7 @@ void createString(String& s0, const char *p) {
 
     s0.pData = new char[s0.len+1];
 
-    strcpy(s0.pData, p)
-
+    strcpy(s0.pData, p);
 }
 
 /**
@@ -139,13 +138,11 @@ void createString(String& s0, const String& s1) {
  * @param idx - index
  * @return idx indexű karakter
  */
-char charAtString(const String& s0, unsigned int idx){
-    s0.len = strlen(p);
-
-    s0.pData = new char[s0.len+1];
-
-    strcpy(s0.pData, p);
-
+char charAtString(const String& s0, int idx) {
+    if (idx >= s0.len || idx < 0)
+        throw "Hibás index";
+        
+    return s0.pData[idx];
 }
 
 /**
@@ -156,7 +153,17 @@ char charAtString(const String& s0, unsigned int idx){
  * @param s1  - referencia a másik String-re
  * @return új String: A két sztring összefûzve.
  */
- String addString(const String& s0, const String& s1);
+String addString(const String& s0, const String& s1) {
+    String result;
+
+    result.len = s0.len + s1.len; // Összeadott hossz
+    result.pData = new char[result.len+1]; // Foglalás + \0
+
+    strcpy(result.pData, s0.pData);
+    strcat(result.pData, s1.pData);
+    
+    return result;
+}
 
 /**
  * String végéhez karaktert ad.
@@ -166,6 +173,14 @@ char charAtString(const String& s0, unsigned int idx){
  * @param ch - a karakter amit hozzáfűz
  * @return új String
  */
-String addString(const String& s0, char ch);
+String addString(const String& s0, char ch) {
+    String result, temp;
+
+    createString(temp, ch); // Felhasználjuk a saját függvényünket
+    result = addString(s0, temp);
+    disposeString(temp);
+
+    return result;
+}
 
 
