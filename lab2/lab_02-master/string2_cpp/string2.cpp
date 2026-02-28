@@ -139,7 +139,7 @@ void createString(String& s0, const String& s1) {
  * @return idx indexű karakter
  */
 char charAtString(const String& s0, int idx) {
-    if (idx >= s0.len || idx < 0)
+    if (idx < 0 || (size_t)idx >= s0.len)
         throw "Hibás index";
         
     return s0.pData[idx];
