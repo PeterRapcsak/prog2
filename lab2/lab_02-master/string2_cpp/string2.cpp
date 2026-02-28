@@ -138,8 +138,8 @@ void createString(String& s0, const String& s1) {
  * @param idx - index
  * @return idx indexű karakter
  */
-char charAtString(const String& s0, int idx) {
-    if (idx < 0 || (size_t)idx >= s0.len)
+char charAtString(const String& s0, unsigned int idx) {
+    if (idx >= s0.len)
         throw "Hibás index";
         
     return s0.pData[idx];
