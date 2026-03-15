@@ -24,7 +24,7 @@ int main() {
 
   TEST(Resistor, HazibanAdottR) {
     double d = r.getR();
-    EXPECT_EQ(999999., d) << "Jporta feladatban megadott default ertekkel hasonlitson!" << std::endl;
+    EXPECT_EQ(66., d) << "Jporta feladatban megadott default ertekkel hasonlitson!" << std::endl;
   } END
 
   Resistor r1(1000), r2(3000);

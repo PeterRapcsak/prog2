@@ -43,7 +43,7 @@
  * azaz, sorban haladva ahol tart a feladatok megoldásában!
  * Ne hagyjon ki feladatot!
  */
-#define ELKESZULT 0
+#define ELKESZULT 10
 
 /**
  * \section fel Feladat:
@@ -131,27 +131,70 @@ public:
 /// Bármelyik megoldás jó, mert ez az osztály belügye.
 
 
-    /// Paraméter nélküli konstruktor:
-    String() :pData(0), len(0) {}
+    /// Paramter nelkuli konstruktor: ures sztringet hoz letre
+    String() :pData(new char[1]), len(0) { pData[0] = '\0'; }
 
-    /// Sztring hosszát adja vissza.
-    /// @return sztring tényleges hossza (lezáró nulla nélkül).
+    /// Destruktor
+    ~String();
+
+    /// Sztring hosszat adja vissza.
+    /// @return sztring tenyleges hossza (lezaro nulla nelkul).
     size_t size() const { return len; }
 
     /// C-sztringet ad vissza
-    /// @return pointer a tárolt, vagy azzal azonos tartalmú nullával lezárt sztring-re.
-    const char* c_str() const { return pData;}
+    /// @return pointer a tarolt, nullaval lezart sztringre.
+    const char* c_str() const { return pData; }
 
-/// Itt folytassa a tagfüggvények deklarációit a feladatoknak megfelelően.
-/// ...
+    /// Konstruktor: char karakterbol hoz letre sztringet
+    /// @param ch - karakter
+    String(char ch);
 
+    /// Konstruktor: C-sztringbol hoz letre sztringet
+    /// @param p - pointer nullaval lezart karaktersorozatra
+    String(const char* p);
 
+    /// Masolo konstruktor
+    /// @param rhs - masolando String
+    String(const String& rhs);
 
+    /// Ertekadas operator
+    /// @param rhs - jobb oldali operandus
+    /// @return referencia onmagara
+    String& operator=(const String& rhs);
 
-}; /// Itt az osztály deklarációjának vége
+    /// Osszeadas: String + String
+    /// @param rhs - jobb oldali String
+    /// @return uj String
+    String operator+(const String& rhs) const;
 
-/// Ide kerülnek a globális operátorok deklarációi.
-/// ...
+    /// Osszeadas: String + char
+    /// @param ch - jobb oldali karakter
+    /// @return uj String
+    String operator+(char ch) const;
+
+    /// Indexeles operator
+    /// @param idx - index
+    /// @return referencia az adott karakterre
+    char& operator[](size_t idx);
+
+    /// Konstans indexeles operator
+    /// @param idx - index
+    /// @return konstans referencia az adott karakterre
+    const char& operator[](size_t idx) const;
+
+}; /// Itt az osztaly deklaraciojanak vege
+
+/// Globalis operator: char + String
+/// @param ch - bal oldali karakter
+/// @param str - jobb oldali String
+/// @return uj String
+String operator+(char ch, const String& str);
+
+/// Inserter operator
+/// @param os - output stream
+/// @param str - kiirando String
+/// @return output stream referencia
+std::ostream& operator<<(std::ostream& os, const String& str);
 
 
 

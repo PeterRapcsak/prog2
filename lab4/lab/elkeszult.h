@@ -6,7 +6,7 @@
  */
 
 /// Készültségi fok beállítása
-#define ELKESZULT 0
+#define ELKESZULT 6
 /**
  *ELKESZULT értéke - feladatok:
  * 1. A paraméter nélküli és az egyparaméteres konstruktorokban van kiírás (ctor0, ctor1).

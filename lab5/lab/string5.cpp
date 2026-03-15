@@ -26,24 +26,78 @@
 #include "string5.h"
 
 
-/// Konstruktorok: egy char karakterből (createString)
-///                egy nullával lezárt char sorozatból (createString)
+// Konstruktor: char karakterbol
+String::String(char ch) : len(1) {
+    pData = new char[2];
+    pData[0] = ch;
+    pData[1] = '\0';
+}
 
-/// Másoló konstruktor: String-ből készít (createString)
+// Konstruktor: C-sztringbol
+String::String(const char* p) : len(strlen(p)) {
+    pData = new char[len + 1];
+    strcpy(pData, p);
+}
 
-/// Destruktor (disposeString)
+// Masolo konstruktor
+String::String(const String& rhs) : len(rhs.len) {
+    pData = new char[len + 1];
+    strcpy(pData, rhs.pData);
+}
 
-/// operator=
+// Destruktor
+String::~String() {
+    delete[] pData;
+}
 
-/// [] operátorok: egy megadott indexű elem REFERENCIÁJÁVAL térnek vissza (charAtString)
-/// indexhiba esetén const char * kivételt dob!
+// Ertekadas operator
+String& String::operator=(const String& rhs) {
+    if (this != &rhs) {
+        delete[] pData;
+        len = rhs.len;
+        pData = new char[len + 1];
+        strcpy(pData, rhs.pData);
+    }
+    return *this;
+}
 
+// Indexeles operator
+char& String::operator[](size_t idx) {
+    if (idx >= len)
+        throw "T0R2E4";
+    return pData[idx];
+}
 
-/// + operátorok:
-///                 String-hez jobbról karaktert ad (addString)
-///                 String-hez String-et ad (addString)
+// Konstans indexeles operator
+const char& String::operator[](size_t idx) const {
+    if (idx >= len)
+        throw "T0R2E4";
+    return pData[idx];
+}
 
-/// << operator, ami kiír az ostream-re
+// String + String
+String String::operator+(const String& rhs) const {
+    String result;
+    delete[] result.pData;
+    result.len = len + rhs.len;
+    result.pData = new char[result.len + 1];
+    strcpy(result.pData, pData);
+    strcat(result.pData, rhs.pData);
+    return result;
+}
 
+// String + char
+String String::operator+(char ch) const {
+    return *this + String(ch);
+}
 
-/// >> operátor, ami beolvas az istream-ről egy szót
+// char + String (globalis)
+String operator+(char ch, const String& str) {
+    return String(ch) + str;
+}
+
+// Inserter operator
+std::ostream& operator<<(std::ostream& os, const String& str) {
+    os << str.c_str();
+    return os;
+}
