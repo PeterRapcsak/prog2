@@ -1,0 +1,10 @@
+warning: The selected output language "hungarian" has not been updated
+since release 1.4.6.  As a result some sentences may appear in English.
+
+C:/Users/szebi/Desktop/ELOADAS_ELOADAS/PROGA/SVN_WORK/cporta_peldak/CppBolt/string5.h:4: warning: the name `string2_kesz.h' supplied as the second argument in the \file statement is not an input file
+C:/Users/szebi/Desktop/ELOADAS_ELOADAS/PROGA/SVN_WORK/cporta_peldak/CppBolt/aru.h:22: warning: argument 'egység' of command @param is not found in the argument list of Aru::Aru(const char *nev, const char *egyseg, double ar)
+C:/Users/szebi/Desktop/ELOADAS_ELOADAS/PROGA/SVN_WORK/cporta_peldak/CppBolt/aru.h:26: warning: The following parameters of Aru::Aru(const char *nev, const char *egyseg, double ar) are not documented:
+  parameter 'egyseg'
+C:/Users/szebi/Desktop/ELOADAS_ELOADAS/PROGA/SVN_WORK/cporta_peldak/CppBolt/datum.h:21: warning: argument 'hó' of command @param is not found in the argument list of Datum::Datum(int ev, int ho, int nap)
+C:/Users/szebi/Desktop/ELOADAS_ELOADAS/PROGA/SVN_WORK/cporta_peldak/CppBolt/datum.h:25: warning: The following parameters of Datum::Datum(int ev, int ho, int nap) are not documented:
+  parameter 'ho'
