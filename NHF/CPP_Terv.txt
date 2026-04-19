@@ -1,0 +1,173 @@
+================================================================================
+  "Legyen Ön is Milliomos" – C++ Terv (NHF)
+  Rapcsák Péter – Programozás alapjai 2
+================================================================================
+
+  A meglévő C nyelvű kvízjáték átírása C++-ba, OOP elvek szerint.
+  A C-beli struct-ok → osztályok, char* → std::string, tömbök → vector,
+  malloc/free → RAII.
+
+
+================================================================================
+  1. OSZTÁLYDIAGRAM
+================================================================================
+
+  Az UML diagram külön mellékelve (kézzel rajzolt).
+
+  Osztályok és kapcsolataik:
+
+  Question [absztrakt]
+    │
+    ├── ChooseQuestion  (feleletválasztós, van nehézségi szint)
+    └── OrderQuestion   (sorrendezős, nincs extra adat)
+
+  Game
+    ├──◆ ChooseQuestion-ök  (vector tömb, szintenként)
+    ├──◆ OrderQuestion-ök   (vector)
+    ├──◆ HighScoreTable     (dicsőséglista kezelő)
+    └──··· FileManager      (statikus hívások, CSV betöltés)
+
+  HighScoreTable
+    └──◆ HighScoreEntry-k   (vector)
+
+  Jelölések: ◆ = kompozíció, ··· = függőség, ├── = öröklés
+
+
+================================================================================
+  2. OSZTÁLYOK RÖVIDEN
+================================================================================
+
+  Question (absztrakt ős)
+    - Közös adatok: kérdés szöveg, kategória, helyes válasz, 4 válasz
+    - Két pure virtual metódus: display(), checkAnswer()
+    - Protected konstruktor (csak leszármazottak hívhatják)
+    - Virtuális destruktor
+
+  ChooseQuestion : public Question
+    - Extra: difficulty (1..12) → melyik szinten jelenik meg
+    - display(): "Téma: ... / A: ... B: ... C: ... D: ..."
+    - checkAnswer(): 1 betű egyezés ("A","B","C","D")
+
+  OrderQuestion : public Question
+    - Nincs extra tagváltozó
+    - display(): "[SORRENDEZŐS] Téma: ... / A: ... B: ..."
+    - checkAnswer(): 4 betű egyezés (pl. "ABCD")
+
+  HighScoreEntry
+    - Adatok: név, nyeremény, dátum
+    - operator> a rendezéshez (prize összehasonlítás)
+
+  HighScoreTable
+    - CSV fájl kezelés: load(), save(), add(), display()
+    - Rendezés: std::sort csökkenő nyeremény szerint
+
+  FileManager
+    - Csak static metódusok, nincs példánya
+    - loadChooseQuestions(): CSV → vector<ChooseQuestion>
+    - loadOrderQuestions(): CSV → vector<OrderQuestion>
+    - fileExists(): létezik-e a fájl
+
+  Game
+    - Tagváltozók: kérdés vektorok, játékos név, szint, nyeremény,
+      segítség flag-ek, HighScoreTable
+    - Static: LEVELS=12, PRIZE_LADDER[12], formatPrize(), isSafeLevel(),
+      getSafePrize()
+    - Fő logika: mainMenu() → play(mode) → askChoose/askOrder →
+      checkAnswer → eredmény mentés
+
+
+================================================================================
+  3. HOGYAN MŰKÖDIK?
+================================================================================
+
+  main.cpp:
+    Game game;
+    game.loadQuestions("kerdesek.csv", "sorkerdesek.csv");
+    game.mainMenu();
+
+  Főmenü:
+    [1] Új játék → mód választás → play(mode)
+    [2] Dicsőséglista → hsTable.display()
+    [3] Kilépés
+
+  Játékmenet (play):
+    - Név bekérése, állapot nullázása
+    - 12 szinten végigmegy:
+        → szinttípus (choose/order/vegyes)
+        → random kérdés kiválasztás a megfelelő vektorból
+        → q.display() + válasz bekérés
+        → q.checkAnswer() → helyes: tovább, helytelen: kiesés
+    - Segítségek (csak feleletválasztósnál): 50:50, közönség, kiszállás (Q)
+    - Biztos szintek: 5. és 10. kérdés
+    - Eredmény mentése dicsőséglistába
+
+  Kérdések betöltése:
+    - FileManager CSV-t olvas → pontosvessző validálás → objektumok
+    - Game szétválogatja szintenként (getDifficulty)
+
+
+================================================================================
+  4. MINTA KIMENET
+================================================================================
+
+  ----------------------------------------------------------------
+         LEGYEN ÖN IS MILLIOMOS
+  ----------------------------------------------------------------
+
+    [1] ÚJ JÁTÉK
+    [2] DICSŐSÉGLISTA
+    [3] KILÉPÉS
+
+  ----------------------------------------------------------------
+  Választás: 1
+
+  ----------------------------------------------------------------
+    4. KÉRDÉS  |  Tét: 50.000 Ft
+    (Biztos nyereményed: 10.000 Ft)
+  ----------------------------------------------------------------
+    Téma: Általános
+
+    Melyik ország fővárosa Budapest?
+
+    A: Ausztria
+    B: Magyarország
+    C: Szlovákia
+    D: Románia
+  ----------------------------------------------------------------
+
+  Válaszod (F - 50:50) (K - Közönség) vagy (Q - Megállás): B
+
+  HELYES VÁLASZ!
+
+
+================================================================================
+  5. FÁJLSTRUKTÚRA
+================================================================================
+
+  NHF/
+  ├── main.cpp           ← belépési pont
+  ├── question.h/.cpp    ← Question, ChooseQuestion, OrderQuestion
+  ├── game.h/.cpp        ← Game osztály
+  ├── highscore.h/.cpp   ← HighScoreEntry, HighScoreTable
+  ├── filemanager.h/.cpp ← FileManager (static)
+  ├── kerdesek.csv       ← feleletválasztós kérdések
+  ├── sorkerdesek.csv    ← sorrendezős kérdések
+  └── dicsoseglista.csv  ← dicsőséglista (auto)
+
+
+================================================================================
+  6. C → C++ FŐ VÁLTOZÁSOK
+================================================================================
+
+  - char* / strdup / free       → std::string (RAII)
+  - fix méretű tömbök           → std::vector
+  - strtok                      → std::getline + istringstream
+  - struct-ok (nincs közös ős)  → osztályhierarchia + virtuális fv-ek
+  - szabad függvények           → osztály metódusok (static ahol kell)
+  - printf / fgets              → cout / getline
+  - debugmalloc.h               → felesleges (RAII)
+  - selection sort              → std::sort
+  - #define MODE_CHOOSE         → enum GameMode
+
+
+================================================================================

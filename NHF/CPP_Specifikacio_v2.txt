@@ -1,0 +1,1009 @@
+================================================================================
+  "Legyen Ön is Milliomos" – C++ Részletes Terv (NHF)
+  Rapcsák Péter
+  Programozás alapjai 2 – Nagy Házi Feladat
+================================================================================
+
+  FELADAT LEÍRÁS (Heltai Kilián, 2026-04-14):
+  ────────────────────────────────────────────
+  PDF dokumentumot kell leadni az elkészített specifikáció alapján.
+  A dokumentum tartalmazzon legalább egy osztálydiagrammot, amelyen
+  az egész program osztályhierarchiája látszik. Az osztályok metódusai
+  és adattagjai is szerepeljenek rajta.
+  A diagrammon kívül a belső működés leírását is tartalmazza a doksi:
+  az osztályok miért felelnek, miként működik egy adott algoritmus
+  amit felhasználnak, komplexebb metódusok mit csinálnak stb.
+
+
+  JELEN DOKUMENTUM TARTALMA:
+  ─────────────────────────
+  1.  Osztálydiagram (UML)
+  2.  Hogyan működik? (indítás, főmenü, játékmenet, segítségek)
+  3.  Osztályok – tagváltozók és metódusok magyarázata
+  4.  Belső algoritmusok (formatPrize, CSV betöltés, rendezés)
+  5.  Minta kimenetek (konzol kinézet)
+  6.  Fájlstruktúra
+  7.  C → C++ változások
+
+
+================================================================================
+  1. OSZTÁLYDIAGRAM (UML – szöveges formátum)
+================================================================================
+
+  A C verzió struktúráit és szabad függvényeit OOP hierarchiába szervezzük.
+  Minden char* → std::string, minden fix méretű tömb → std::vector.
+  Kézi malloc/free/strdup → RAII (automatikus élettartam-kezelés).
+
+  Az UML diagram külön mellékelve van (kézzel rajzolt), itt szövegesen:
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                    <<abstract>> Question                           │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ # question      : std::string                                     │
+  │ # category      : std::string                                     │
+  │ # correctAnswer : std::string                                     │
+  │ # answers       : std::vector<std::string>   (mindig 4 elem)      │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ # Question(q, cat, correct, answers)  [protected konstruktor]     │
+  │ + virtual ~Question()                 [virtuális destruktor]       │
+  │                                                                   │
+  │ + virtual void   display() const = 0  [tisztán virtuális]         │
+  │ + virtual bool   checkAnswer(const std::string& input) const = 0  │
+  │                                                                   │
+  │ + const std::string& getQuestion()       const                    │
+  │ + const std::string& getCategory()       const                    │
+  │ + const std::string& getCorrectAnswer()  const                    │
+  │ + const std::vector<std::string>& getAnswers() const              │
+  └───────────────────────────┬─────────────────┬─────────────────────┘
+                              │                 │
+                         (öröklés)         (öröklés)
+                              │                 │
+            ┌─────────────────┘                 └──────────────────┐
+            ▼                                                     ▼
+  ┌──────────────────────────────────┐   ┌──────────────────────────────────┐
+  │      ChooseQuestion              │   │      OrderQuestion               │
+  │   (feleletválasztós)             │   │   (sorrendezős)                  │
+  ├──────────────────────────────────┤   ├──────────────────────────────────┤
+  │ - difficulty : int  (1..12)      │   │   (nincs extra tagváltozó)       │
+  ├──────────────────────────────────┤   ├──────────────────────────────────┤
+  │ + ChooseQuestion(diff, q, cat,   │   │ + OrderQuestion(q, cat,          │
+  │     correct, answers)            │   │     correct, answers)            │
+  │ + ~ChooseQuestion() override     │   │ + ~OrderQuestion() override      │
+  │                                  │   │                                  │
+  │ + void display() const override  │   │ + void display() const override  │
+  │ + bool checkAnswer(input)        │   │ + bool checkAnswer(input)        │
+  │          const override          │   │          const override          │
+  │                                  │   │                                  │
+  │ + int getDifficulty() const      │   │   (nincs extra metódus)          │
+  └──────────────────────────────────┘   └──────────────────────────────────┘
+
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │                        HighScoreEntry                               │
+  ├──────────────────────────────────────────────────────────────────────┤
+  │ - name  : std::string                                              │
+  │ - date  : std::string        (formátum: "ÉÉÉÉ/HH/NN")             │
+  │ - prize : int                                                      │
+  ├──────────────────────────────────────────────────────────────────────┤
+  │ + HighScoreEntry(name, date, prize)                                │
+  │                                                                    │
+  │ + const std::string& getName()  const                              │
+  │ + const std::string& getDate()  const                              │
+  │ + int                getPrize() const                              │
+  │                                                                    │
+  │ + bool operator>(const HighScoreEntry& rhs) const                  │
+  │     → prize > rhs.prize  (rendezéshez kell)                        │
+  └──────────────────────────────────────────────────────────────────────┘
+
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │                        HighScoreTable                               │
+  ├──────────────────────────────────────────────────────────────────────┤
+  │ - entries  : std::vector<HighScoreEntry>                           │
+  │ - filename : std::string                                           │
+  ├──────────────────────────────────────────────────────────────────────┤
+  │ + HighScoreTable(filename = "dicsoseglista.csv")                   │
+  │                                                                    │
+  │ + void load()                  [fájlból beolvasás]                 │
+  │ + void save() const            [teljes lista fájlba írás]         │
+  │ + void add(name, prize)        [új bejegyzés + mentés]            │
+  │ + void display() const         [rendezve kiírás konzolra]         │
+  └──────────────────────────────────────────────────────────────────────┘
+
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │                          FileManager                                │
+  ├──────────────────────────────────────────────────────────────────────┤
+  │   (nincs tagváltozó – csak statikus metódusok)                     │
+  ├──────────────────────────────────────────────────────────────────────┤
+  │ + static std::vector<ChooseQuestion>                               │
+  │       loadChooseQuestions(const std::string& filename)              │
+  │                                                                    │
+  │ + static std::vector<OrderQuestion>                                │
+  │       loadOrderQuestions(const std::string& filename)               │
+  │                                                                    │
+  │ + static bool fileExists(const std::string& path)                  │
+  └──────────────────────────────────────────────────────────────────────┘
+
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │                             Game                                        │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │ - chooseQuestions : std::vector<ChooseQuestion>[LEVELS]                 │
+  │ - orderQuestions  : std::vector<OrderQuestion>                         │
+  │ - hsTable         : HighScoreTable                                     │
+  │                                                                        │
+  │ - playerName      : std::string                                        │
+  │ - currentLevel    : int                                                │
+  │ - finalPrize      : int                                                │
+  │ - gameOver        : bool                                               │
+  │ - walkAway        : bool                                               │
+  │ - used5050        : bool                                               │
+  │ - usedAudience    : bool                                               │
+  │ - hiddenResponses : int[2]                                             │
+  │                                                                        │
+  │ - hasChoose       : bool                                               │
+  │ - hasOrder        : bool                                               │
+  │                                                                        │
+  │ + static const int LEVELS = 12                                         │
+  │ + static const int PRIZE_LADDER[LEVELS]                                │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │ + Game()                          [default konstruktor]                │
+  │                                                                        │
+  │ + void loadQuestions(chooseFile, orderFile)                             │
+  │ + void mainMenu()                                                      │
+  │                                                                        │
+  │ - void play(int mode)                                                  │
+  │ - void askChooseQuestion(ChooseQuestion& q)                            │
+  │ - void askOrderQuestion(OrderQuestion& q)                              │
+  │ - void apply5050(ChooseQuestion& q)                                    │
+  │ - void applyAudience(ChooseQuestion& q)                                │
+  │ - void resetGameState()                                                │
+  │ - std::string getPlayerName()                                          │
+  │                                                                        │
+  │ + static std::string formatPrize(int prize)                            │
+  │ + static bool isSafeLevel(int index)                                   │
+  │ + static int  getSafePrize(int index)                                  │
+  │ + static void printSeparator()                                         │
+  │ + static void waitEnter()                                              │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+
+  KAPCSOLATOK:
+  ───────────────────────────────────────────────────────────────
+  Question  ◄──── ChooseQuestion    (öröklés, publikus)
+  Question  ◄──── OrderQuestion     (öröklés, publikus)
+  Game ◆──────── ChooseQuestion     (kompozíció, vector tömb)
+  Game ◆──────── OrderQuestion      (kompozíció, vector)
+  Game ◆──────── HighScoreTable     (kompozíció, tagváltozó)
+  Game ·········· FileManager       (függőség, statikus hívások)
+  HighScoreTable ◆── HighScoreEntry (kompozíció, vector)
+
+
+================================================================================
+  2. HOGYAN MŰKÖDIK?
+     (A program teljes működésének leírása, elejétől a végéig)
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+  2.1  Indítás
+────────────────────────────────────────────────────────────────────────────────
+
+  A main.cpp-ben mindössze ennyi történik:
+
+    int main() {
+        Game game;
+        game.loadQuestions("kerdesek.csv", "sorkerdesek.csv");
+        game.mainMenu();
+        return 0;
+    }
+
+  1) Game game;
+     → A konstruktor beállítja az alapértékeket (currentLevel = 0,
+       gameOver = false, stb.) és meghívja az srand()-ot.
+
+  2) game.loadQuestions(...)
+     → A FileManager statikus metódusain keresztül beolvassa a CSV-ket.
+     → A feleletválasztós kérdéseket szintenként (1..12) csoportosítja
+       a chooseQuestions[0..11] vektorokba.
+     → A sorrendezős kérdéseket az orderQuestions vektorba teszi.
+     → Beállítja a hasChoose / hasOrder flag-eket.
+
+  3) game.mainMenu()
+     → Elindítja a főmenü végtelen ciklust.
+
+  4) Kilépéskor a Game destruktora automatikusan felszabadít mindent.
+     Nincs free(), nincs fclose() – RAII.
+
+  Összehasonlítás a C verzióval:
+    C:   calloc → loadChooseQuestions → while(running){...} → free → return
+    C++: Game objektum → loadQuestions → mainMenu → destruktor (automatikus)
+
+────────────────────────────────────────────────────────────────────────────────
+  2.2  Főmenü (Game::mainMenu)
+────────────────────────────────────────────────────────────────────────────────
+
+  Végtelen ciklus, amíg a felhasználó nem választja a [3]-at:
+
+    [1] ÚJ JÁTÉK
+      → Játékmód választás (1 = feleletválasztós, 2 = sorrendezős, 3 = vegyes)
+      → Csak azok a módok elérhetők, amelyekhez van betöltött kérdés.
+      → play(mode) hívás.
+
+    [2] DICSŐSÉGLISTA
+      → hsTable.display() hívás → betölti a CSV-t, rendezi, kiírja.
+
+    [3] KILÉPÉS
+      → A ciklus véget ér, visszatér a main()-be.
+
+────────────────────────────────────────────────────────────────────────────────
+  2.3  Egy teljes játékmenet (Game::play)
+────────────────────────────────────────────────────────────────────────────────
+
+  1) Név bekérése: getPlayerName()
+     → Max 20 karakter, ';' kiszűrése (CSV védelem), üres → "Jatekos".
+
+  2) Állapot nullázása: resetGameState()
+     → currentLevel=0, finalPrize=0, gameOver=false, walkAway=false,
+       used5050=false, usedAudience=false, hiddenResponses={-1,-1}.
+
+  3) Fő játékciklus: while (currentLevel < 12 && !gameOver)
+
+     Minden szinten:
+       a) hiddenResponses = {-1, -1}  (előző 50:50 törlése)
+       b) Szinttípus meghatározása:
+            MODE_CHOOSE → mindig feleletválasztós
+            MODE_ORDER  → mindig sorrendezős
+            MODE_BOTH   → (currentLevel + 1) % 3 == 0 → sorrendezős
+                          (tehát a 3., 6., 9., 12. kérdés sorrendezős)
+
+       c) Fejléc kiírás:
+            "4. KÉRDÉS  |  Tét: 50.000 Ft"
+            "(Biztos nyereményed: 0 Ft)"   – vagy semmi, ha 0
+
+       d) Véletlenszerű kérdés kiválasztása:
+            - Feleletválasztós: chooseQuestions[currentLevel] vektorból
+              rand() % vector.size()
+            - Sorrendezős: orderQuestions vektorból
+              rand() % vector.size()
+
+       e) Kérdés megjelenítése: q.display()  (polimorf hívás)
+
+       f) Válasz bekérése:
+            - Feleletválasztós: A/B/C/D + segítségek (F, K) + kiszállás (Q)
+            - Sorrendezős: 4 betűs kombináció (pl. "ABCD") + kiszállás (Q)
+            - Sorrendezősnél NINCS segítség!
+
+       g) Kiértékelés:
+            - q.checkAnswer(input)  (polimorf hívás)
+            - Helyes → currentLevel++, biztos szint üzenet ha kell
+            - Helytelen → finalPrize = getSafePrize(currentLevel - 1)
+              → gameOver = true
+
+  4) Játék vége:
+     - Ha mind a 12 szintet teljesítette → "GRATULÁLOK! ÖN MILLIOMOS LETT!"
+       finalPrize = 5.000.000 Ft
+     - Ha kiesett → "Kiestél! Nyereményed: [biztos szint összeg] Ft"
+     - Ha kiszállt → "Megálltál! Nyereményed: [előző szint tétje] Ft"
+
+  5) Eredmény mentése: hsTable.add(playerName, finalPrize)
+
+────────────────────────────────────────────────────────────────────────────────
+  2.4  Segítségek
+────────────────────────────────────────────────────────────────────────────────
+
+  CSAK feleletválasztós kérdéseknél érhetők el!
+
+  50:50 segítség (Game::apply5050):
+    → Kiszámolja a helyes válasz indexét: correctAnswer[0] - 'A'
+    → Véletlenszerűen kiválaszt 2 ROSSZ választ → elrejti őket.
+    → A hiddenResponses[2] tömbbe menti az elrejtett indexeket.
+    → Kiírja a megmaradt 2 lehetőséget.
+    → Ezeket a válaszokat a játékos NEM választhatja többé.
+    → Egyszer használható a teljes játékmenetben (used5050 flag).
+
+  Közönségszavazás (Game::applyAudience):
+    → A helyes válasz 30-60% közötti százalékot kap: rand() % 31 + 30
+    → A maradék %-ot véletlenszerűen elosztja a 3 rossz válasz között.
+    → Kiírja: "A: 12%  B: 53%  C: 8%  D: 27%"
+    → Egyszer használható (usedAudience flag).
+
+  Kiszállás ("Q"):
+    → Bármikor, bármelyik kérdéstípusnál elérhető.
+    → Kiszállásnál az ELŐZŐ szint tétjét kapja meg a játékos.
+    → Ha az 1. kérdésnél száll ki → 0 Ft.
+
+────────────────────────────────────────────────────────────────────────────────
+  2.5  Pénzlétra és biztos szintek
+────────────────────────────────────────────────────────────────────────────────
+
+  static const int PRIZE_LADDER[12] = {
+      5.000, 10.000, 20.000, 50.000, 100.000, 200.000,
+      300.000, 500.000, 800.000, 1.500.000, 3.000.000, 5.000.000
+  };
+
+  Biztos szintek: 5. kérdés (index 4) → 100.000 Ft
+                  10. kérdés (index 9) → 1.500.000 Ft
+
+  Ha a játékos kiesik:
+    - Ha még nem érte el az 5. kérdést → 0 Ft
+    - Ha az 5-9. kérdésnél esik ki → 100.000 Ft
+    - Ha a 10. kérdés után esik ki → 1.500.000 Ft
+
+────────────────────────────────────────────────────────────────────────────────
+  2.6  Dicsőséglista működése
+────────────────────────────────────────────────────────────────────────────────
+
+  HighScoreTable::add(name, prize):
+    → Lekéri az aktuális dátumot (localtime → "ÉÉÉÉ/HH/NN").
+    → Létrehoz egy HighScoreEntry-t.
+    → Append módban hozzáírja a CSV végéhez.
+    → Ha a fájl üres volt → először fejlécet ír.
+
+  HighScoreTable::display():
+    → Beolvassa a CSV-t (load logika).
+    → Rendezi csökkenő nyeremény szerint: std::sort + operator>.
+    → Formázott kiírás: Játékos | Nyeremény | Dátum.
+
+────────────────────────────────────────────────────────────────────────────────
+  2.7  Kérdések betöltésének folyamata
+────────────────────────────────────────────────────────────────────────────────
+
+  Game::loadQuestions("kerdesek.csv", "sorkerdesek.csv")
+    │
+    ├──► FileManager::loadChooseQuestions("kerdesek.csv")
+    │       → ifstream megnyitás → fejlécsor átugrása
+    │       → soronként: pontosvessző számlálás (7-et vár)
+    │       → darabolás ';' mentén → ChooseQuestion létrehozás
+    │       → return vector<ChooseQuestion>
+    │
+    ├──► Szétválogatás szintenként:
+    │       for (auto& cq : loaded)
+    │           chooseQuestions[cq.getDifficulty() - 1].push_back(cq);
+    │
+    ├──► FileManager::loadOrderQuestions("sorkerdesek.csv")
+    │       → hasonló, de 6 pontosvesszőt vár
+    │       → return vector<OrderQuestion>
+    │
+    └──► orderQuestions = std::move(loaded);
+
+
+================================================================================
+  3. OSZTÁLYOK – TAGVÁLTOZÓK ÉS METÓDUSOK MAGYARÁZATA
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+  3.1  Question  (absztrakt ősosztály)
+────────────────────────────────────────────────────────────────────────────────
+
+  FÁJL: question.h / question.cpp
+
+  CÉL: A két kérdéstípus közös alapja. Tartalmazza a kérdés szövegét,
+       a kategóriát, a helyes választ és a 4 válaszlehetőséget.
+       Absztrakt → NEM lehet közvetlenül példányosítani.
+
+  TAGVÁLTOZÓK (# = protected):
+  ┌────────────────┬──────────────────────────┬─────────────────────────────────┐
+  │ Név            │ Típus                    │ Leírás                          │
+  ├────────────────┼──────────────────────────┼─────────────────────────────────┤
+  │ question       │ std::string              │ A kérdés szövege                │
+  │ category       │ std::string              │ Kategória (pl. "Történelem")    │
+  │ correctAnswer  │ std::string              │ Helyes válasz ("A" vagy "ABCD") │
+  │ answers        │ std::vector<std::string>  │ 4 válaszlehetőség szövege      │
+  └────────────────┴──────────────────────────┴─────────────────────────────────┘
+  → Protected, mert a leszármazottak (ChooseQuestion, OrderQuestion)
+    közvetlenül is elérhetik.
+
+  METÓDUSOK:
+  ┌─────────────────────────────────────────────────┬───────────────────────────────────────┐
+  │ Metódus                                         │ Mit csinál?                           │
+  ├─────────────────────────────────────────────────┼───────────────────────────────────────┤
+  │ # Question(q, cat, correct, ans)                │ Protected konstruktor. Inicializálja  │
+  │                                                 │ a 4 tagváltozót. Csak leszármazottak  │
+  │                                                 │ hívhatják.                            │
+  ├─────────────────────────────────────────────────┼───────────────────────────────────────┤
+  │ + virtual ~Question() = default                 │ Virtuális destruktor. Kell, mert      │
+  │                                                 │ polimorf hierarchia: ha Question*     │
+  │                                                 │ pointerrel törlünk, a helyes dtor     │
+  │                                                 │ hívódjon meg. default, mert RAII.     │
+  ├─────────────────────────────────────────────────┼───────────────────────────────────────┤
+  │ + virtual void display() const = 0              │ Tisztán virtuális (pure virtual).     │
+  │                                                 │ A kérdés kiírása konzolra.            │
+  │                                                 │ Nincs törzse → Question absztrakt.    │
+  │                                                 │ Mindkét leszármazott máshogy írja ki. │
+  ├─────────────────────────────────────────────────┼───────────────────────────────────────┤
+  │ + virtual bool checkAnswer(input) const = 0     │ Tisztán virtuális. Ellenőrzi, hogy    │
+  │                                                 │ a megadott válasz helyes-e.            │
+  │                                                 │ Choose: 1 betű, Order: 4 betű.        │
+  ├─────────────────────────────────────────────────┼───────────────────────────────────────┤
+  │ + getQuestion() const                           │ Getter. const ref visszaadás.         │
+  │ + getCategory() const                           │ Getter. const ref visszaadás.         │
+  │ + getCorrectAnswer() const                      │ Getter. const ref visszaadás.         │
+  │ + getAnswers() const                            │ Getter. const ref visszaadás.         │
+  └─────────────────────────────────────────────────┴───────────────────────────────────────┘
+
+  MIÉRT VIRTUÁLIS A display() ÉS A checkAnswer()?
+    Mert a ChooseQuestion és az OrderQuestion máshogy jeleníti meg magát
+    és máshogy ellenőriz. A polimorfizmus lehetővé teszi, hogy Question&
+    vagy Question* típuson keresztül a helyes leszármazott metódus fusson.
+
+────────────────────────────────────────────────────────────────────────────────
+  3.2  ChooseQuestion  (feleletválasztós kérdés)
+────────────────────────────────────────────────────────────────────────────────
+
+  FÁJL: question.h / question.cpp
+  ÖRÖKLÉS: class ChooseQuestion : public Question
+
+  CÉL: Egy feleletválasztós kérdés. A C-beli ChooseQuestion struct
+       C++ megfelelője, de örökli a Question közös mezőit.
+
+  EXTRA TAGVÁLTOZÓ (- = private):
+  ┌─────────────┬───────┬────────────────────────────────────────┐
+  │ Név         │ Típus │ Leírás                                 │
+  ├─────────────┼───────┼────────────────────────────────────────┤
+  │ difficulty  │ int   │ Nehézségi szint (1..12). Ez határozza  │
+  │             │       │ meg, melyik szinten jelenik meg.       │
+  │             │       │ (C-beli diff mező megfelelője)         │
+  └─────────────┴───────┴────────────────────────────────────────┘
+
+  METÓDUSOK:
+  ┌─────────────────────────────────────────────┬───────────────────────────────────────────┐
+  │ Metódus                                     │ Mit csinál?                               │
+  ├─────────────────────────────────────────────┼───────────────────────────────────────────┤
+  │ + ChooseQuestion(diff, q, cat, correct, ans)│ Konstruktor. Meghívja az ős              │
+  │                                             │ Question(q,cat,correct,ans)-t, beállítja  │
+  │                                             │ a difficulty-t.                           │
+  ├─────────────────────────────────────────────┼───────────────────────────────────────────┤
+  │ + ~ChooseQuestion() override = default      │ Destruktor. override + default.           │
+  ├─────────────────────────────────────────────┼───────────────────────────────────────────┤
+  │ + void display() const override             │ Kiírja:                                   │
+  │                                             │   "Téma: [category]"                      │
+  │                                             │   "[question]"                            │
+  │                                             │   "A: [ans[0]]  B: [ans[1]]  ..."         │
+  ├─────────────────────────────────────────────┼───────────────────────────────────────────┤
+  │ + bool checkAnswer(input) const override    │ return input == correctAnswer;            │
+  │                                             │ Az input 1 betű: "A","B","C","D".         │
+  ├─────────────────────────────────────────────┼───────────────────────────────────────────┤
+  │ + int getDifficulty() const                 │ Visszaadja a difficulty-t. A Game ez      │
+  │                                             │ alapján sorolja be a szintekbe.           │
+  └─────────────────────────────────────────────┴───────────────────────────────────────────┘
+
+────────────────────────────────────────────────────────────────────────────────
+  3.3  OrderQuestion  (sorrendezős kérdés)
+────────────────────────────────────────────────────────────────────────────────
+
+  FÁJL: question.h / question.cpp
+  ÖRÖKLÉS: class OrderQuestion : public Question
+
+  CÉL: Egy sorrendezős kérdés. A játékos 4 elemet (A,B,C,D) kell
+       helyes sorrendbe raknia. A correctAnswer itt 4 karakter, pl. "ACBD".
+
+  EXTRA TAGVÁLTOZÓ: Nincs. Minden adat az ős Question-ben van.
+
+  METÓDUSOK:
+  ┌─────────────────────────────────────────────┬───────────────────────────────────────────┐
+  │ Metódus                                     │ Mit csinál?                               │
+  ├─────────────────────────────────────────────┼───────────────────────────────────────────┤
+  │ + OrderQuestion(q, cat, correct, ans)       │ Konstruktor. Meghívja Question(...)-t.    │
+  ├─────────────────────────────────────────────┼───────────────────────────────────────────┤
+  │ + ~OrderQuestion() override = default       │ Destruktor.                               │
+  ├─────────────────────────────────────────────┼───────────────────────────────────────────┤
+  │ + void display() const override             │ Kiírja:                                   │
+  │                                             │   "[SORRENDEZŐS] Téma: [category]"        │
+  │                                             │   "[question]"                            │
+  │                                             │   "A: [ans[0]]  B: [ans[1]]  ..."         │
+  ├─────────────────────────────────────────────┼───────────────────────────────────────────┤
+  │ + bool checkAnswer(input) const override    │ return input == correctAnswer;            │
+  │                                             │ Az input 4 betű, pl. "ABCD", "BACD".     │
+  └─────────────────────────────────────────────┴───────────────────────────────────────────┘
+
+────────────────────────────────────────────────────────────────────────────────
+  3.4  HighScoreEntry  (dicsőséglista bejegyzés)
+────────────────────────────────────────────────────────────────────────────────
+
+  FÁJL: highscore.h
+
+  CÉL: Egy játékos eredménye: név, nyeremény, dátum.
+       A C-beli HighScore struct megfelelője, de std::string-ekkel.
+
+  TAGVÁLTOZÓK (- = private):
+  ┌────────┬────────────────┬───────────────────────────────┐
+  │ Név    │ Típus          │ Leírás                        │
+  ├────────┼────────────────┼───────────────────────────────┤
+  │ name   │ std::string    │ Játékos neve                  │
+  │ date   │ std::string    │ Dátum, "ÉÉÉÉ/HH/NN"          │
+  │ prize  │ int            │ Elért nyeremény (Ft)          │
+  └────────┴────────────────┴───────────────────────────────┘
+
+  METÓDUSOK:
+  ┌─────────────────────────────────────────────┬───────────────────────────────────────────┐
+  │ Metódus                                     │ Mit csinál?                               │
+  ├─────────────────────────────────────────────┼───────────────────────────────────────────┤
+  │ + HighScoreEntry(name, date, prize)         │ Konstruktor. Initializer list.            │
+  ├─────────────────────────────────────────────┼───────────────────────────────────────────┤
+  │ + getName() const                           │ Getter, const ref.                        │
+  │ + getDate() const                           │ Getter, const ref.                        │
+  │ + getPrize() const                          │ Getter, int.                              │
+  ├─────────────────────────────────────────────┼───────────────────────────────────────────┤
+  │ + operator>(const HighScoreEntry& rhs)      │ return prize > rhs.prize;                 │
+  │                                             │ A dicsőséglista csökkenő rendezéséhez.    │
+  │                                             │ std::sort()-tal használható.               │
+  └─────────────────────────────────────────────┴───────────────────────────────────────────┘
+
+────────────────────────────────────────────────────────────────────────────────
+  3.5  HighScoreTable  (dicsőséglista kezelő)
+────────────────────────────────────────────────────────────────────────────────
+
+  FÁJL: highscore.h / highscore.cpp
+
+  CÉL: A dicsoseglista.csv fájl olvasása, bővítése, rendezése, kiírása.
+       A C-beli saveHighscore() és showHighscores() függvények osztálya.
+
+  TAGVÁLTOZÓK (- = private):
+  ┌───────────┬─────────────────────────────────┬────────────────────┐
+  │ Név       │ Típus                           │ Leírás             │
+  ├───────────┼─────────────────────────────────┼────────────────────┤
+  │ entries   │ std::vector<HighScoreEntry>     │ Bejegyzések listája│
+  │ filename  │ std::string                     │ CSV fájl elérése   │
+  └───────────┴─────────────────────────────────┴────────────────────┘
+
+  METÓDUSOK:
+  ┌───────────────────────────────────────────────┬─────────────────────────────────────────┐
+  │ Metódus                                       │ Mit csinál?                             │
+  ├───────────────────────────────────────────────┼─────────────────────────────────────────┤
+  │ + HighScoreTable(filename="dicsoseglista.csv")│ Konstruktor. Beállítja a fájlnevet.     │
+  │                                               │ NEM tölt be automatikusan.              │
+  ├───────────────────────────────────────────────┼─────────────────────────────────────────┤
+  │ + void load()                                 │ Megnyitja a CSV-t ifstream-mel.         │
+  │                                               │ Fejlécsor átugrása. Soronként:          │
+  │                                               │ name;prize;date beolvasás.              │
+  │                                               │ Ha nem 2 db ';' → sor kihagyása.        │
+  ├───────────────────────────────────────────────┼─────────────────────────────────────────┤
+  │ + void save() const                           │ Kiírja az egész listát a fájlba.        │
+  │                                               │ Fejléc: "Név;Nyerémeny;Dátum"           │
+  ├───────────────────────────────────────────────┼─────────────────────────────────────────┤
+  │ + void add(name, prize)                       │ Dátumot lekéri (localtime).             │
+  │                                               │ HighScoreEntry létrehozás + push_back.  │
+  │                                               │ Append módban hozzáírja a CSV-hez.      │
+  │                                               │ Ha üres fájl → fejlécet ír előbb.       │
+  ├───────────────────────────────────────────────┼─────────────────────────────────────────┤
+  │ + void display() const                        │ load() → std::sort() csökkenő rendben  │
+  │                                               │ → formázott kiírás konzolra.            │
+  └───────────────────────────────────────────────┴─────────────────────────────────────────┘
+
+────────────────────────────────────────────────────────────────────────────────
+  3.6  FileManager  (fájlkezelő, nincs példánya)
+────────────────────────────────────────────────────────────────────────────────
+
+  FÁJL: filemanager.h / filemanager.cpp
+
+  CÉL: CSV kérdésfájlok beolvasása. Nincs állapota → minden metódus static.
+       A C-beli loadChooseQuestions() és loadOrderQuestions() megfelelői.
+
+  KONSTRUKTOR: FileManager() = delete;   (nem példányosítható)
+
+  METÓDUSOK:
+  ┌───────────────────────────────────────────────────┬─────────────────────────────────────────┐
+  │ Metódus                                           │ Mit csinál?                             │
+  ├───────────────────────────────────────────────────┼─────────────────────────────────────────┤
+  │ + static vector<ChooseQuestion>                   │ CSV megnyitás → fejléc skip →           │
+  │   loadChooseQuestions(filename)                    │ soronként: 7 db ';' ellenőrzés →        │
+  │                                                   │ darabolás (istringstream) →              │
+  │                                                   │ nehézség validálás (1..12) →             │
+  │                                                   │ ChooseQuestion létrehozás + push_back.  │
+  ├───────────────────────────────────────────────────┼─────────────────────────────────────────┤
+  │ + static vector<OrderQuestion>                    │ Hasonló, de 6 db ';'-t vár.             │
+  │   loadOrderQuestions(filename)                     │ OrderQuestion objektumokat hoz létre.   │
+  ├───────────────────────────────────────────────────┼─────────────────────────────────────────┤
+  │ + static bool fileExists(path)                    │ ifstream-mel megnyitja → return good(). │
+  └───────────────────────────────────────────────────┴─────────────────────────────────────────┘
+
+────────────────────────────────────────────────────────────────────────────────
+  3.7  Game  (fő játékosztály)
+────────────────────────────────────────────────────────────────────────────────
+
+  FÁJL: game.h / game.cpp
+
+  CÉL: A teljes játék vezérlése: főmenü, játékmenet, segítségek,
+       pénzlétra, eredménymentes. A C-beli playGame() + main() C++ formája.
+
+  STATIKUS KONSTANSOK:
+  ┌──────────────────────┬───────────────────┬─────────────────────────────────────┐
+  │ Név                  │ Típus             │ Érték                               │
+  ├──────────────────────┼───────────────────┼─────────────────────────────────────┤
+  │ LEVELS               │ static const int  │ 12                                  │
+  │ PRIZE_LADDER[12]     │ static const int[]│ {5000, 10000, 20000, 50000,         │
+  │                      │                   │  100000, 200000, 300000, 500000,    │
+  │                      │                   │  800000, 1500000, 3000000, 5000000} │
+  └──────────────────────┴───────────────────┴─────────────────────────────────────┘
+
+  JÁTÉKMÓD ENUM:
+    enum GameMode { MODE_CHOOSE = 1, MODE_ORDER = 2, MODE_BOTH = 3 };
+
+  TAGVÁLTOZÓK (- = private):
+  ┌───────────────────┬──────────────────────────────────────┬───────────────────────────────────────┐
+  │ Név               │ Típus                                │ Leírás                                │
+  ├───────────────────┼──────────────────────────────────────┼───────────────────────────────────────┤
+  │ chooseQuestions    │ vector<ChooseQuestion>[LEVELS]       │ 12 vektor, szintenként csoportosítva  │
+  │ orderQuestions     │ vector<OrderQuestion>                │ Összes sorrendezős kérdés             │
+  │ hsTable            │ HighScoreTable                       │ Dicsőséglista objektum                │
+  ├───────────────────┼──────────────────────────────────────┼───────────────────────────────────────┤
+  │ playerName         │ std::string                          │ Aktuális játékos neve                 │
+  │ currentLevel       │ int                                  │ Aktuális szint (0..11)                │
+  │ finalPrize         │ int                                  │ Végső nyeremény                       │
+  │ gameOver           │ bool                                 │ Játék vége flag                       │
+  │ walkAway           │ bool                                 │ Kiszállt-e a játékos                  │
+  ├───────────────────┼──────────────────────────────────────┼───────────────────────────────────────┤
+  │ used5050           │ bool                                 │ Felhasználta-e az 50:50-t             │
+  │ usedAudience       │ bool                                 │ Felhasználta-e a közönséget           │
+  │ hiddenResponses    │ int[2]                               │ 50:50-vel elrejtett válaszindexek     │
+  ├───────────────────┼──────────────────────────────────────┼───────────────────────────────────────┤
+  │ hasChoose          │ bool                                 │ Van-e betöltött feleletválasztós       │
+  │ hasOrder           │ bool                                 │ Van-e betöltött sorrendezős           │
+  └───────────────────┴──────────────────────────────────────┴───────────────────────────────────────┘
+
+  PUBLIKUS METÓDUSOK:
+  ┌─────────────────────────────────────────┬─────────────────────────────────────────────────────┐
+  │ Metódus                                 │ Mit csinál?                                         │
+  ├─────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ + Game()                                │ Nullázza az összes flag-et, srand() hívás.          │
+  ├─────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ + void loadQuestions(chooseF, orderF)    │ FileManager hívásokkal betölti a CSV-ket.           │
+  │                                         │ Szétválogatja szintenként a feleletválasztósakat.   │
+  ├─────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ + void mainMenu()                       │ Főmenü ciklus: [1] Játék [2] Toplista [3] Kilépés  │
+  └─────────────────────────────────────────┴─────────────────────────────────────────────────────┘
+
+  PRIVÁT METÓDUSOK:
+  ┌─────────────────────────────────────────┬─────────────────────────────────────────────────────┐
+  │ Metódus                                 │ Mit csinál?                                         │
+  ├─────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ - void play(int mode)                   │ Egy teljes játékmenet: név bekérés →                │
+  │                                         │ 12 szinten végigmegy → eredmény mentése.            │
+  ├─────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ - void askChooseQuestion(CQ& q)         │ Feleletválasztós kérdés feltevése + válasz          │
+  │                                         │ bekérés ciklusban (A/B/C/D/F/K/Q).                 │
+  ├─────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ - void askOrderQuestion(OQ& q)          │ Sorrendezős kérdés feltevése + válasz bekérés       │
+  │                                         │ (4 betű / Q). Segítségek NEM elérhetők.             │
+  ├─────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ - void apply5050(CQ& q)                 │ 2 rossz válasz elrejtése véletlenszerűen.           │
+  ├─────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ - void applyAudience(CQ& q)             │ Százalékos szavazás generálása és kiírása.          │
+  ├─────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ - void resetGameState()                 │ Minden változó nullázása új játék előtt.             │
+  ├─────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ - string getPlayerName()                │ Név bekérés: max 20 kar, ';' szűrés, üres→"Jatekos"│
+  └─────────────────────────────────────────┴─────────────────────────────────────────────────────┘
+
+  STATIKUS SEGÉDFÜGGVÉNYEK (public):
+  ┌─────────────────────────────────────────┬─────────────────────────────────────────────────────┐
+  │ Metódus                                 │ Mit csinál?                                         │
+  ├─────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ + static string formatPrize(int prize)  │ 5000000 → "5.000.000". Nincs malloc, auto string.  │
+  ├─────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ + static bool isSafeLevel(int index)    │ return (index==4 || index==9). Biztos szint-e?     │
+  ├─────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ + static int getSafePrize(int index)    │ Garantált nyeremény kiesés esetén.                  │
+  │                                         │ index>=9 → 1.500.000, index>=4 → 100.000, else 0. │
+  ├─────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ + static void printSeparator()          │ "--------------------------------------------"      │
+  ├─────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ + static void waitEnter()               │ "[Nyomj Entert a folytatáshoz...]" + cin.get()     │
+  └─────────────────────────────────────────┴─────────────────────────────────────────────────────┘
+
+  MIÉRT STATIKUS EZ A SOK METÓDUS?
+    Mert nem használják a Game objektum állapotát. Bármikor hívhatók
+    Game példány nélkül is: Game::formatPrize(5000), Game::isSafeLevel(4).
+
+  MIÉRT STATIKUS A LEVELS ÉS A PRIZE_LADDER?
+    Mert az osztály ÖSSZES példányára azonosak, nem változnak futás közben.
+    Egy helyen léteznek, nem minden Game objektumban külön-külön.
+
+
+================================================================================
+  4. BELSŐ ALGORITMUSOK
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+  4.1  formatPrize algoritmus (Game::formatPrize)
+────────────────────────────────────────────────────────────────────────────────
+
+  CÉL: Egész számot "5.000.000" formátumú stringgé alakítani.
+  BE:  int prize (pl. 5000000)
+  KI:  std::string (pl. "5.000.000")
+
+  LÉPÉSEK:
+    1. Az int-et std::to_string()-gel stringgé alakítjuk: "5000000"
+    2. Hátulról előre haladunk egy számlálóval.
+    3. Minden 3. számjegy után egy '.' karaktert szúrunk be.
+    4. Eredmény: "5.000.000"
+    5. std::string visszaadás (nincs malloc, nincs free).
+
+  A C-ben ehhez malloc + strdup + free kellett. C++-ban automatikus.
+
+────────────────────────────────────────────────────────────────────────────────
+  4.2  CSV betöltés (FileManager::loadChooseQuestions)
+────────────────────────────────────────────────────────────────────────────────
+
+  CÉL: A kerdesek.csv fájlból ChooseQuestion vektort előállítani.
+  BE:  const std::string& filename
+  KI:  std::vector<ChooseQuestion>
+
+  CSV formátum: Nehézség;Kérdés;A;B;C;D;Válasz;Kategória  (7 db ';')
+
+  LÉPÉSEK:
+    1. std::ifstream megnyitás. Ha sikertelen → üres vektor + hibaüzenet.
+    2. Fejlécsor átugrása (std::getline).
+    3. Soronként beolvasás (std::getline):
+       a) Pontosvesszők számlálása: std::count(line, ';')
+          Ha nem 7 → continue (hibás sor kihagyása).
+       b) Darabolás: std::istringstream + std::getline(ss, field, ';')
+          → 8 mező: nehézség, kérdés, A, B, C, D, válasz, kategória
+       c) Nehézség: std::stoi() → 1..12 tartomány ellenőrzés.
+          Ha kívül esik → continue.
+       d) ChooseQuestion objektum létrehozása → push_back.
+    4. Vektor visszaadása (move semantics → nincs másolás).
+
+  A loadOrderQuestions() ugyanez, de 6 pontosvesszővel és
+  OrderQuestion objektumokkal (nincs nehézségi szint mező).
+
+────────────────────────────────────────────────────────────────────────────────
+  4.3  Dicsőséglista rendezés (HighScoreTable::display)
+────────────────────────────────────────────────────────────────────────────────
+
+  CÉL: Bejegyzéseket csökkenő nyeremény szerint kiírni.
+
+  LÉPÉSEK:
+    1. load() → entries vektor feltöltése a CSV-ből.
+    2. std::sort() csökkenő rendezéssel:
+         std::sort(entries.begin(), entries.end(),
+                   [](const HighScoreEntry& a, const HighScoreEntry& b)
+                   { return a > b; });
+    3. Formázott kiírás: Game::formatPrize() minden bejegyzésre.
+
+  A C-ben kézi selection sort volt (O(n²)). C++-ban std::sort (O(n log n)).
+
+────────────────────────────────────────────────────────────────────────────────
+  4.4  Kérdés kiválasztás (Game::play)
+────────────────────────────────────────────────────────────────────────────────
+
+  Minden szinten:
+
+  1. Szinttípus:
+       MODE_CHOOSE → mindig feleletválasztós
+       MODE_ORDER  → mindig sorrendezős
+       MODE_BOTH   → (currentLevel + 1) % 3 == 0 → sorrendezős
+                     (3., 6., 9., 12. kérdés)
+
+  2. Feleletválasztós → chooseQuestions[currentLevel] vektorból:
+       rand() % vector.size()
+
+  3. Sorrendezős → orderQuestions vektorból:
+       rand() % vector.size()
+
+  4. q.display()       → polimorf hívás (a helyes leszármazott display()-e)
+  5. q.checkAnswer()   → polimorf hívás (a helyes leszármazott ellenőrzése)
+
+
+================================================================================
+  5. MINTA KIMENETEK (konzol kinézet)
+================================================================================
+
+  ┌────────────────────────────────────────────────────────┐
+  │                    FŐMENÜ                              │
+  ├────────────────────────────────────────────────────────┤
+  │ ---------------------------------------------------------------- │
+  │         LEGYEN ÖN IS MILLIOMOS                        │
+  │ ---------------------------------------------------------------- │
+  │                                                       │
+  │   [1] ÚJ JÁTÉK                                       │
+  │   [2] DICSŐSÉGLISTA                                   │
+  │   [3] KILÉPÉS                                         │
+  │                                                       │
+  │ ---------------------------------------------------------------- │
+  │ Választás: _                                          │
+  └────────────────────────────────────────────────────────┘
+
+  ┌────────────────────────────────────────────────────────┐
+  │              FELELETVÁLASZTÓS KÉRDÉS                   │
+  ├────────────────────────────────────────────────────────┤
+  │ ---------------------------------------------------------------- │
+  │   4. KÉRDÉS  |  Tét: 50.000 Ft                       │
+  │   (Biztos nyereményed: 10.000 Ft)                    │
+  │ ---------------------------------------------------------------- │
+  │   Téma: Általános                                     │
+  │                                                       │
+  │   Melyik ország fővárosa Budapest?                    │
+  │                                                       │
+  │   A: Ausztria                                         │
+  │   B: Magyarország                                     │
+  │   C: Szlovákia                                        │
+  │   D: Románia                                          │
+  │ ---------------------------------------------------------------- │
+  │                                                       │
+  │ Válaszod (F - 50:50) (K - Közönség) vagy (Q - Megállás): _ │
+  └────────────────────────────────────────────────────────┘
+
+  ┌────────────────────────────────────────────────────────┐
+  │                SORRENDEZŐS KÉRDÉS                      │
+  ├────────────────────────────────────────────────────────┤
+  │ ---------------------------------------------------------------- │
+  │   7. KÉRDÉS  |  Tét: 300.000 Ft                      │
+  │   (Biztos nyereményed: 100.000 Ft)                   │
+  │ ---------------------------------------------------------------- │
+  │   [SORRENDEZŐS] Téma: Biológia                       │
+  │                                                       │
+  │   Tegye az alábbi növényeket virágzási idejük         │
+  │   kezdete szerint időrendbe!                          │
+  │                                                       │
+  │   A: ibolya                                           │
+  │   B: rózsa                                            │
+  │   C: orgona                                           │
+  │   D: őszi rózsa                                       │
+  │ ---------------------------------------------------------------- │
+  │                                                       │
+  │ Válaszod vagy (Q - Megállás): _                      │
+  └────────────────────────────────────────────────────────┘
+
+  ┌────────────────────────────────────────────────────────┐
+  │              50:50 SEGÍTSÉG                            │
+  ├────────────────────────────────────────────────────────┤
+  │ 50:50 AKTIVÁLVA! Maradt:                              │
+  │   A: Ausztria                                         │
+  │   B: Magyarország                                     │
+  └────────────────────────────────────────────────────────┘
+
+  ┌────────────────────────────────────────────────────────┐
+  │             KÖZÖNSÉG SZAVAZATA                         │
+  ├────────────────────────────────────────────────────────┤
+  │ A KÖZÖNSÉG SZAVAZATA:                                 │
+  │   A: 12%  B: 53%  C: 8%  D: 27%                     │
+  └────────────────────────────────────────────────────────┘
+
+  ┌────────────────────────────────────────────────────────┐
+  │               HELYES VÁLASZ                           │
+  ├────────────────────────────────────────────────────────┤
+  │ HELYES VÁLASZ!                                        │
+  │ >>> BIZTOS SZINT ELÉRVE! (100.000 Ft) <<<            │
+  │                                                       │
+  │ [Nyomj Entert a folytatáshoz...]                     │
+  └────────────────────────────────────────────────────────┘
+
+  ┌────────────────────────────────────────────────────────┐
+  │               ROSSZ VÁLASZ                            │
+  ├────────────────────────────────────────────────────────┤
+  │ ROSSZ VÁLASZ! A helyes: B                             │
+  │ Kiestél! Nyereményed: 100.000 Ft                     │
+  └────────────────────────────────────────────────────────┘
+
+  ┌────────────────────────────────────────────────────────┐
+  │              GRATULÁLOK!                               │
+  ├────────────────────────────────────────────────────────┤
+  │ GRATULÁLOK! ÖN MILLIOMOS LETT!                        │
+  │                                                       │
+  │ Nyereményed: 5.000.000 Ft                             │
+  └────────────────────────────────────────────────────────┘
+
+  ┌────────────────────────────────────────────────────────┐
+  │             KISZÁLLÁS                                  │
+  ├────────────────────────────────────────────────────────┤
+  │ Megálltál! Nyereményed: 50.000 Ft                     │
+  └────────────────────────────────────────────────────────┘
+
+  ┌────────────────────────────────────────────────────────┐
+  │             DICSŐSÉGLISTA                              │
+  ├────────────────────────────────────────────────────────┤
+  │         - DICSŐSÉGLISTA -                             │
+  │ ---------------------------------------------------------------- │
+  │  Játékos               | Nyeremény     | Dátum       │
+  │ ---------------------------------------------------------------- │
+  │  Petixddd              | 5.000.000 Ft  | 2026/04/19  │
+  │  Rapcsák Péter         |   100.000 Ft  | 2026/04/18  │
+  │  Jatekos               |         0 Ft  | 2026/04/17  │
+  │ ---------------------------------------------------------------- │
+  └────────────────────────────────────────────────────────┘
+
+
+================================================================================
+  6. FÁJLSTRUKTÚRA
+================================================================================
+
+  NHF/
+  ├── main.cpp              ← Belépési pont (Game létrehozás + mainMenu)
+  ├── question.h            ← Question, ChooseQuestion, OrderQuestion osztályok
+  ├── question.cpp          ← Implementáció
+  ├── game.h                ← Game osztály deklaráció
+  ├── game.cpp              ← Game osztály implementáció
+  ├── highscore.h           ← HighScoreEntry, HighScoreTable osztályok
+  ├── highscore.cpp         ← HighScoreTable implementáció
+  ├── filemanager.h         ← FileManager osztály (statikus metódusok)
+  ├── filemanager.cpp       ← FileManager implementáció
+  ├── kerdesek.csv          ← Feleletválasztós kérdések
+  ├── sorkerdesek.csv       ← Sorrendezős kérdések
+  └── dicsoseglista.csv     ← Dicsőséglista (automatikusan jön létre)
+
+  Fordítás:
+    g++ -Wall -Wextra -std=c++17 -g main.cpp question.cpp game.cpp
+        highscore.cpp filemanager.cpp -o loim
+
+
+================================================================================
+  7. C → C++ VÁLTOZÁSOK
+================================================================================
+
+  ┌────────────────────────────────┬──────────────────────────────────────────┐
+  │         C verzió               │          C++ verzió                      │
+  ├────────────────────────────────┼──────────────────────────────────────────┤
+  │ char *q, *answers[4]           │ std::string – RAII, nincs free()        │
+  │ strdup() + free()              │ automatikus élettartam                   │
+  ├────────────────────────────────┼──────────────────────────────────────────┤
+  │ calloc + fix méretű 2D tömb    │ std::vector<ChooseQuestion>[LEVELS]     │
+  │ MAX_CHOOSE_QUESTIONS = 600     │ nincs limit, vector automatikusan nő    │
+  ├────────────────────────────────┼──────────────────────────────────────────┤
+  │ strtok(line, ";")              │ std::getline(stream, field, ';')        │
+  │ (módosítja a stringet)         │ (biztonságos, nem módosít)               │
+  ├────────────────────────────────┼──────────────────────────────────────────┤
+  │ ChooseQuestion struct          │ ChooseQuestion class : public Question  │
+  │ OrderQuestion struct           │ OrderQuestion class : public Question   │
+  │ (nincs közös ős)               │ (közös absztrakt ős, virtuális fv-ek)   │
+  ├────────────────────────────────┼──────────────────────────────────────────┤
+  │ printf / fgets                 │ std::cout / std::getline                │
+  ├────────────────────────────────┼──────────────────────────────────────────┤
+  │ formatPrize() → malloc-olt str │ formatPrize() → std::string             │
+  │ free() kell utána              │ automatikus                             │
+  ├────────────────────────────────┼──────────────────────────────────────────┤
+  │ HighScore* + realloc + free    │ vector<HighScoreEntry>                  │
+  │ selection sort O(n²)           │ std::sort O(n log n)                    │
+  ├────────────────────────────────┼──────────────────────────────────────────┤
+  │ #define MODE_CHOOSE 1          │ enum GameMode { MODE_CHOOSE = 1, ... } │
+  │ makrók                         │ típusbiztos enum                        │
+  ├────────────────────────────────┼──────────────────────────────────────────┤
+  │ szabad függvények              │ osztály metódusok (Game, FileManager)   │
+  │ isSafeLevel(), getSafePrize()  │ Game::isSafeLevel() – static           │
+  ├────────────────────────────────┼──────────────────────────────────────────┤
+  │ debugmalloc.h                  │ NINCS – RAII miatt felesleges            │
+  │ (memóriaszivárgás detektálás)  │ (string/vector maguk kezelik)            │
+  └────────────────────────────────┴──────────────────────────────────────────┘
+
+
+================================================================================
+  KONSTRUKTOROK ÖSSZEFOGLALÁSA
+================================================================================
+
+  Question (protected):
+    : question(q), category(cat), correctAnswer(correct), answers(ans) {}
+
+  ChooseQuestion:
+    : Question(q, cat, correct, ans), difficulty(diff) {}
+
+  OrderQuestion:
+    : Question(q, cat, correct, ans) {}
+
+  HighScoreEntry:
+    : name(name), prize(prize), date(date) {}
+
+  HighScoreTable:
+    : filename(filename) {}     // entries kezdetben üres
+
+  FileManager:
+    = delete;                   // nem példányosítható
+
+  Game:
+    Nullázza a flag-eket, srand() hívás, hsTable alapértelmezett fájlnévvel.
+
+
+================================================================================
+  HIBAKEZELÉS
+================================================================================
+
+  - Fájl megnyitási hiba: if (!file.is_open()) → hibaüzenet, return.
+  - Hibás CSV sor: pontosvesszők száma nem stimmel → continue.
+  - Érvénytelen nehézség: std::stoi() + tartomány (1..12) → continue.
+  - Üres játékosnév: if (name.empty()) name = "Jatekos";
+  - ';' a névben: std::replace(..., ';', ' ') – CSV injection védelem.
+  - Érvénytelen válasz: ciklusban bekérjük amíg érvényes nem lesz.
+  - 50:50-vel kizárt válasz: ellenőrzés a hiddenResponses tömbbel.
+
+
+================================================================================
