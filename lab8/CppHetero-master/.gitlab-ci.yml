@@ -1,0 +1,68 @@
+
+stages:
+  - build
+  - test
+  - package
+  - release
+  - deploy
+
+# Global git/submodule behavior and diagnostics
+variables:
+  GIT_STRATEGY: fetch
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_SUBMODULE_DEPTH: "1"
+  GIT_SUBMODULE_FORCE_HTTPS: "true"
+  GIT_TERMINAL_PROMPT: "0"      # prevent interactive auth prompts (hangs)
+  GIT_CURL_VERBOSE: "1"
+  GIT_TRACE: "1"
+
+# Helper: auth + init submodules using CI_JOB_TOKEN on the same GitLab host
+.submodule_auth_and_init:
+  before_script:
+    # Rewrite repo URLs to use HTTPS + CI job token for the current GitLab server
+    - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/".insteadOf "git@${CI_SERVER_HOST}:"
+    - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/".insteadOf "https://${CI_SERVER_HOST}/"
+    - git submodule sync --recursive
+    - git submodule update --init --recursive --depth 1
+    - git submodule status --recursive || true
+
+# RELEASE: create tag v0.$CI_PIPELINE_IID on DEFAULT BRANCH and attach artifacts
+release_job:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  # Keep your original behavior: run on default branch, *not* on manual tags.
+  rules:
+    - if: '$CI_COMMIT_TAG'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  variables:
+    TAG_NAME: "v0.${CI_PIPELINE_IID}"   # easy, monotonically increasing per pipeline
+    RELEASE_DESC: "v0.${CI_PIPELINE_IID}"
+  extends: [.submodule_auth_and_init]
+  script:
+    - apk add --no-cache git rsync zip
+#    - export WORKDIR="repo-${CI_COMMIT_SHORT_SHA}"
+#    - mkdir -p "${WORKDIR}"
+#    - rsync -a --exclude='.git' --exclude='.gitmodules' --exclude='.gitignore' --exclude="${WORKDIR}" ./ "${WORKDIR}/"
+    - git submodule foreach --recursive
+    - zip -r "${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}.zip" .
+    - echo "Creating tag ${TAG_NAME} for ${CI_COMMIT_SHA} and publishing release…"
+    # Create the tag at current pipeline SHA (idempotent: release-cli creates if absent)
+    - rm -r .git/
+    - >
+      release-cli create
+      --name "${CI_PROJECT_NAME} ${TAG_NAME}"
+      --tag-name "${TAG_NAME}"
+      --description "${RELEASE_DESC}"
+      --ref "${CI_COMMIT_SHA}"
+      --assets-link "{\"name\":\"Laborra (.zip)\",\"url\":\"${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/file/${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}.zip?job=package\",\"link_type\":\"package\"}"
+  # Optional: timeout to avoid long hangs
+  artifacts:
+    name: "${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - "${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}.zip"
+    expire_in: 4 weeks
+  timeout: 20m
+  # If your runners require tags, add them:
+  # tags:
+  #   - your-runner-tag

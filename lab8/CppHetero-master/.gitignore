@@ -1,0 +1,7 @@
+*.layout
+*.depend
+*.o
+memtrace/
+obj/
+bin/
+hetero_test
