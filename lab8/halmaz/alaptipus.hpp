@@ -12,9 +12,9 @@ template <typename T>
 class Alaptipus {
     T adat;
 public:
-    Alaptipus(T i = T()) : adat(i = 0) {}
-    operator T&() {return adat;}
-    operator T() const {return adat;}
+    Alaptipus(T i = 0) : adat(i) {} // 0 alapérték
+    operator T&() { return adat; }
+    operator T() const { return adat; }
 };
 
 #endif // ALAPTIPUS_HPP

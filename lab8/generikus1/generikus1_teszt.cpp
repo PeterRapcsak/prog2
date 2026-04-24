@@ -27,7 +27,8 @@
 
 
 /// Ebből a függvényből kell sablont készíteni ELKESZULT >= 2 esetén (l. útmutató)
-void kiir(Integer* first, Integer* last, std::ostream& os = std::cout) {
+template <typename Iterator> //így bármire mőködik
+void kiir(Iterator first, Iterator last, std::ostream& os = std::cout) {
     while (first != last)
         os << *first++ << ' ';
     os << std::endl;
