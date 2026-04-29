@@ -17,7 +17,7 @@
 /*
     CEL: Visszaadja a dobando azonositot
     MEGJEGYZES:
-     - CPORTA alatt ORG_ID kornyezeti valtozobol olvassuk
+     - ORG_ID kornyezeti valtozobol olvassuk
      - lokalis futasnal legyen egy alapertelmezett ertek
 */
 namespace {
