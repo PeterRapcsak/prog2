@@ -2,7 +2,7 @@
     filemanager.h - Header file
 ----------------------------------------------------------------------
     CÉL:
-     - CSV fájlkezelő osztály deklarációja (statikus metódusok)
+     - CSV filekezelő osztály deklarációja
 ======================================================================*/
 
 #ifndef FILEMANAGER_H
@@ -15,15 +15,17 @@
 
 //! ---------- FÁJLKEZELÉS ----------
 
-// CÉL: CSV állományok beolvasása (statikus segédosztály)
+// CÉL: CSV állományok beolvasása
 class FileManager {
 public:
-    // CÉL: Feleletválasztós kérdések betöltése CSV-ből. FORMA: "Nehézség;Kérdés;A;B;C;D;Válasz;Kategória"
+    // CÉL: Feleletválasztós kérdések betöltése CSV-ből
+    // FORMA: "Nehézség;Kérdés;A;B;C;D;Válasz;Kategória"
     static std::vector<ChooseQuestion> loadChooseQuestions(const std::string& filename);
 
-    // CÉL: Sorrendezős kérdések betöltése CSV-ből. FORMA: "Sorkérdés;A;B;C;D;Válasz;Kategória"
+    // CÉL: Sorrendezős kérdések betöltése CSV-ből
+    // FORMA: "Sorkérdés;A;B;C;D;Válasz;Kategória"
     static std::vector<OrderQuestion> loadOrderQuestions(const std::string& filename);
-    // Mindkét .csv fileban skippelni kell az első sort
+    // Mindkét CSV fileban skippelni kell az első sort és a hibás sorokat 
     //! EZEKET A FILEOKAT A PROJEKT KÖNYVTÁRÁBAN KERESSÜK
 
     // CÉL: Fájl létezésének ellenőrzése

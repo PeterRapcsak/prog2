@@ -122,7 +122,12 @@ public:
         }
 
         /// post-inkremens
-        iterator operator++(int);       // ezt kell elkészítenie
+        /// visszaadja a léptetés előtti értéket, majd lépteti az iterátort
+        iterator operator++(int) {
+            iterator tmp = *this;   // eltesszük a jelenlegi értéket
+            operator++();           // alkalmazzuk a pre-inkremenst
+            return tmp;             // léptetés előttivel tér vissza
+        }
 
         /// egyenlőtlenség vizsgálat
         /// @param i - jobboldali operandus

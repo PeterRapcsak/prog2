@@ -89,8 +89,7 @@ int main() {
 #if ELKESZULT >= 15
         // Számlálja össze az intarr1-ben az 5-nél nagyobb elemeket!
         // Használja a korábban elkészített szamol_ha sablont!
-#error "egeszitse ki a kodot"
-        int db =
+        int db = szamol_ha(intarr1.begin(), intarr1.end(), nagyobb_mint<int>(5));
         cout << "\nintarr1-ben 5-nel nagyobb: ";
         cout << db << " db" << endl;
 #endif // ELKESZULT >= 15
