@@ -22,7 +22,7 @@ private:
 
 public:
     // CÉL: Név, dátum és nyeremény eltárolása
-    HighScoreEntry(const std::string& name, const std::string& date, int prize);
+    HighScoreEntry(const std::string& name, int prize);
 
     // CÉL: Játékos nevének lekérése
     const std::string& getName() const;

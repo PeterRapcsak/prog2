@@ -45,8 +45,8 @@ private:
     bool usedAudience;      // Közönség segítség használva
     int hiddenResponses[2]; // Elrejtett válaszok indexei (50:50 hez használva)
 
-    bool hasChoose; // Feleletválasztós kérdés elérhető
-    bool hasOrder;  // Sorrendezős kérdés elérhető
+    bool hasChoose; // Feleletválasztós kérdés betöltve
+    bool hasOrder;  // Sorrendezős kérdés betöltve
     // Ezek azért kellenek, mert ha nem találunk pld sorrendezős kérdést
     //  akkor még lehet feleletválasztós kérdéssel is jatszani
 

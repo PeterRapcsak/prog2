@@ -57,7 +57,7 @@ private:
 
 public:
     // CÉL: Feleletválasztós kérdés létrehozása
-    ChooseQuestion(int diff,
+    ChooseQuestion(int diff,                                // Kérdés nehézsége (1-12)
                    const std::string& q,                    // Kérdés szövege
                    const std::string& cat,                  // Kérdés kategóriája
                    const std::string& correct,              // Helyes válasz ("B")

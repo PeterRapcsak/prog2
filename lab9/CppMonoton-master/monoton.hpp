@@ -1,20 +1,14 @@
-/*
- * \file monoton.hpp
- *
- * Generikus algoritmus: monoton sorozat eldöntése.
- */
-
 #ifndef MONOTON_HPP
 #define MONOTON_HPP
 
 /// @tparam InputIterator - iterátor típusa
-/// @tparam Predicate     - kétoperandusú predikátum típusa
-/// @param first - sorozat elejére mutató iterátor (zárt)
-/// @param last  - sorozat végét jelző iterátor (nyílt)
-/// @param pred  - kétoperandusú predikátum: pred(kovetkezo, elozo) vizsgálja az elemek viszonyát
-/// @return - igaz, ha a sorozat monoton a predikátum szerint (üres vagy egyelemű sorozat mindig igaz)
-template <typename InputIterator, typename Predicate>
-bool monoton(InputIterator first, InputIterator last, Predicate pred) {
+/// @tparam Feltetel - kétoperandusú predikátum típusa
+/// @return Igaz, ha a sorozat monoton a feltetel szerint 
+template <typename InputIterator, typename Feltetel>
+bool monoton(   InputIterator first,    // sorozat elejére mutató iterátor
+                InputIterator last,     // sorozat végét jelző iterátor
+                Feltetel pred) {        // vizsgálja az elemek viszonyát
+
     if (first == last) return true;     // üres sorozat -> monoton
 
     InputIterator prev = first; // előző elem iterátora
@@ -23,11 +17,11 @@ bool monoton(InputIterator first, InputIterator last, Predicate pred) {
 
     while (curr != last) {
         if (!pred(*curr, *prev))
-            return false;  // feltétel megsértve: nem monoton
-        prev = curr;    // léptetés
-        curr++;         // curr növelése
+            return false;   // feltétel nem teljesül -> nem monoton
+        prev = curr;        // léptetés
+        curr++;             // curr növelése
     }
-    return true;        // minden szomszédos pár jó
+    return true; // minden szomszédos pár jó
 }
 
-#endif
+#endif 
