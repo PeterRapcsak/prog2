@@ -16,9 +16,7 @@
 
 //! ---------- TESZTPROGRAM VÁZ ----------
 
-/*
-    CÉL: Egyszerű tesztprogram futtatása
-*/
+// CÉL: Egyszerű tesztprogram futtatása
 int main() {
     HighScoreTable table("dicsoseglista.csv");
 

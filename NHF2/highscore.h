@@ -59,6 +59,9 @@ public:
 
     // CÉL: Dicsőséglista rendezett kiírása
     void display() const;
+
+    // CÉL: Lista törlése és mentése
+    void reset();
 };
 
 #endif

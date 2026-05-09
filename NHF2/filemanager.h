@@ -15,7 +15,7 @@
 
 //! ---------- FÁJLKEZELÉS ----------
 
-// CÉL: CSV állományok beolvasása
+// CÉL: CSV fileok beolvasása
 class FileManager {
 public:
     // CÉL: Feleletválasztós kérdések betöltése CSV-ből

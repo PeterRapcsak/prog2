@@ -1,10 +1,10 @@
 /*======================================================================
-    filemanager.cpp - Fájlkezelő implementáció
+    filemanager.cpp - CSV fájlok betöltése
 ----------------------------------------------------------------------
-    CÉL:
-     - CSV fájlok beolvasása és kérdés objektumok létrehozása
-     - Feleletválasztós és sorrendezős kérdések betöltése
-     - Fájl létezésének ellenőrzése
+    FELADAT:
+     - kerdesek.csv/sorkerdesek.csv olvasása
+     - File létezésének ellenőrzése
+     - ";" csekkolás és hibás sorok kezelése
 ======================================================================*/
 
 #include "filemanager.h"
@@ -42,7 +42,7 @@ vector<ChooseQuestion> FileManager::loadChooseQuestions(const string& filename) 
         string field;
         vector<string> fields;
 
-        // Pontosvesszők alapján darabolás
+        // Pontosvesszők alapján darabolás (honnan, hová, meddig)
         while (getline(ss, field, ';')) {
             fields.push_back(field); // egyesével a vektor végére
         }
@@ -62,8 +62,12 @@ vector<ChooseQuestion> FileManager::loadChooseQuestions(const string& filename) 
         // fields[2..5] = A, B, C, D válaszok
         vector<string> answers = { fields[2], fields[3], fields[4], fields[5] };
 
-        // fields[1]=kérdés, fields[7]=kategória, fields[6]=helyes válasz
-        result.emplace_back(diff, fields[1], fields[7], fields[6], answers); // Nem hívja a copy konstruktort
+        // fields[1] - kérdés
+        // fields[7] - kategória,
+        // fields[6] - helyes válasz
+        result.emplace_back(diff, fields[1], fields[7], fields[6], answers);
+        // Nem hívja a copy konstruktort, a result-ban hozza létre az uj rekordot
+        // igen tudom majdnem teljesen ugyanaz mint a push_back() de marginally gyrosabb
     }
 
     return result;
@@ -103,18 +107,17 @@ vector<OrderQuestion> FileManager::loadOrderQuestions(const string& filename) {
         // fields[1..4] = A, B, C, D elemek (ezeket kell sorba rendezni)
         vector<string> answers = { fields[1], fields[2], fields[3], fields[4] };
 
-        // fields[0]=kérdés, fields[6]=kategória, fields[5]=helyes sorrend
+        // fields[0] - kérdés
+        // fields[6] - kategória
+        // fields[5] - helyes sorrend
         result.emplace_back(fields[0], fields[6], fields[5], answers);
     }
 
     return result;
 }
 
-/*
-    CÉL: Megnézni hogy egy file létezik-e
-    BE: path - a file elérési útja
-    KI: true = létezik, false = nem
-*/
+
+//CÉL: Megnézni hogy egy file létezik-e
 bool FileManager::fileExists(const string& path) {
     ifstream inputFile(path);
     return inputFile.good(); // .good() = csekkolja hogy a filestream helyes/használható-e

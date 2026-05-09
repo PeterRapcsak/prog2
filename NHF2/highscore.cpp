@@ -1,113 +1,98 @@
 /*======================================================================
-    highscore.cpp - Dicsőséglista implementáció
+    highscore.cpp - Dicsőséglista kezelése
 ----------------------------------------------------------------------
-    CÉL:
-     - HighScoreEntry és HighScoreTable metódusok
-     - Betöltés / mentés / rendezett kiírás
+    FELADAT:
+     - CSV-ből betöltés (dicsoseglista.csv)
+     - Új rekord hozzáadása (név, nyeremény) + számított dátum
+     - CSV-be mentés
+     - Rendezés csökkenő nyeremény szerint
 ======================================================================*/
 
 #include "highscore.h"
+#include "colors.h"
 #include <algorithm> // std::sort
 #include <fstream>   // ifstream, ofstream
 #include <iostream>  // std::cout
 #include <sstream>   // stringstream
 #include <ctime>     // time, localtime, strftime
 
+namespace {
+
+// CÉL: Szám formázása ezres elválasztóval (pl. 5000000 -> 5.000.000)
+std::string formatPrize(int prize) {
+    std::string n = std::to_string(prize);
+    std::string r;
+    int cnt = 0;
+    for (int i = static_cast<int>(n.size()) - 1; i >= 0; --i) {
+        r.insert(r.begin(), n[static_cast<std::size_t>(i)]);
+        if (++cnt == 3 && i != 0) { r.insert(r.begin(), '.'); cnt = 0; }
+    }
+    return r;
+}
+
+// CÉL: Szöveg kiegészítése szóközökkel a kívánt látható szélességre (UTF-8 tudatos)
+std::string visiblePad(const std::string& s, std::size_t width) {
+    std::size_t visLen = 0;
+    for (unsigned char c : s) {
+        if ((c & 0xC0) != 0x80) ++visLen;
+    }
+    std::string result = s;
+    while (visLen < width) { result += ' '; ++visLen; }
+    return result;
+}
+
+} // namespace
+
 //! ---------- BEJEGYZÉS OSZTÁLY ----------
 
-/*
-    CÉL: Dicsőséglista bejegyzés létrehozása
-    BE:
-     - name  : játékos neve
-    - date: dátum szöveg
-    - prize: elért nyeremény összege
-*/
 HighScoreEntry::HighScoreEntry(const std::string& name, const std::string& date, int prize)
     : name(name), date(date), prize(prize) {}
 
-// CÉL: Játékos nevének lekérése
-const std::string& HighScoreEntry::getName() const {
-    return name;
-}
+const std::string& HighScoreEntry::getName() const  { return name;  }
+const std::string& HighScoreEntry::getDate() const  { return date;  }
+int                HighScoreEntry::getPrize() const  { return prize; }
 
-// CÉL: Dátum szöveg lekérése
-const std::string& HighScoreEntry::getDate() const {
-    return date;
-}
-
-// CÉL: Nyeremény összegének lekérése
-int HighScoreEntry::getPrize() const {
-    return prize;
-}
-
-/*
-    CÉL: Összehasonlítás rendezéshez
-    KI: true ha ez a bejegyzés nagyobb nyereményű mint rhs
-*/
 bool HighScoreEntry::operator>(const HighScoreEntry& rhs) const {
     return prize > rhs.prize;
 }
 
 //! ---------- DICSŐSÉGLISTA TÁBLA ----------
 
-/*
-    CÉL: Dicsőséglista tábla létrehozása
-    BE: filename - CSV file neve
-*/
 HighScoreTable::HighScoreTable(const std::string& filename)
     : filename(filename)
 {
-    load(); // konstruktorban rögtön betöltjük
+    load();
 }
 
-/*
-    CÉL: Bejegyzések beolvasása CSV fileból
-    FORMÁTUM: Nev;Nyeremeny;Datum
-*/
 void HighScoreTable::load() {
     entries.clear();
 
     std::ifstream in(filename);
-    if (!in.is_open()) {
-        return; // nincs file -> üres lista
-    }
+    if (!in.is_open()) return;
 
     std::string line;
-    std::getline(in, line); // első sor (fejléc) kihagyása
+    std::getline(in, line); // fejléc kihagyása
 
     while (std::getline(in, line)) {
         std::stringstream ss(line);
-        std::string name;
-        std::string prizeStr;
-        std::string date;
+        std::string name, prizeStr, date;
 
-        // Pontosvessző alapján darabolás
-        if (!std::getline(ss, name, ';'))     continue;
+        if (!std::getline(ss, name,     ';')) continue;
         if (!std::getline(ss, prizeStr, ';')) continue;
-        if (!std::getline(ss, date, ';'))     continue;
+        if (!std::getline(ss, date,     ';')) continue;
 
         int prize = 0;
-        try {
-            prize = std::stoi(prizeStr);
-        } catch (...) {
-            continue; // hibás szám -> sor kihagyása
-        }
+        try { prize = std::stoi(prizeStr); } catch (...) { continue; }
 
         entries.emplace_back(name, date, prize);
     }
 }
 
-/*
-    CÉL: Bejegyzések teljes visszaírása CSV fileba
-*/
 void HighScoreTable::save() const {
     std::ofstream out(filename);
-    if (!out.is_open()) {
-        return; // nem írható file
-    }
+    if (!out.is_open()) return;
 
-    out << "Nev;Nyeremeny;Datum\n"; // fejléc
-
+    out << "Nev;Nyeremeny;Datum\n";
     for (std::size_t i = 0; i < entries.size(); ++i) {
         out << entries[i].getName()  << ';'
             << entries[i].getPrize() << ';'
@@ -115,47 +100,61 @@ void HighScoreTable::save() const {
     }
 }
 
-/*
-    CÉL: Új eredmény hozzáadása és mentése
-    BE:
-     - name  : játékos neve
-     - prize : elért nyeremény
-*/
 void HighScoreTable::add(const std::string& name, int prize) {
-    std::time_t now   = std::time(nullptr);
-    std::tm* tmNow    = std::localtime(&now);
+    std::time_t now = std::time(nullptr);
+    std::tm* tmNow  = std::localtime(&now);
 
     char dateBuffer[16] = {0};
-    if (tmNow != nullptr) {
+    if (tmNow != nullptr)
         std::strftime(dateBuffer, sizeof(dateBuffer), "%Y/%m/%d", tmNow);
-    }
 
     entries.emplace_back(name, dateBuffer, prize);
-    save(); // azonnal mentjük fileba
+    save();
 }
 
-/*
-    CÉL: Dicsőséglista kiírása csökkenő nyeremény szerint
-*/
+void HighScoreTable::reset() {
+    entries.clear();
+    save();
+}
+
 void HighScoreTable::display() const {
-    // Másolatot rendezünk, az eredeti vektor sorrendje marad
     std::vector<HighScoreEntry> sorted = entries;
     std::sort(sorted.begin(), sorted.end(),
               [](const HighScoreEntry& a, const HighScoreEntry& b) {
-                  return a.getPrize() > b.getPrize(); // csökkenő sorrend
+                  return a.getPrize() > b.getPrize();
               });
 
-    std::cout << "\n\t- DICSŐSÉGLISTA -\n";
-    std::cout << "----------------------------------------------------------------\n";
-    std::cout << " #   Játékos               Nyeremény       Dátum\n";
-    std::cout << "----------------------------------------------------------------\n";
+    static const std::string SEP =
+        "────────────────────────────────────────────────────────────────";
+
+    std::cout << Color::BOLD_YELLOW << "\t             ─── DICSŐSÉGLISTA ───\n" << Color::RESET;
+    std::cout << SEP << "\n";
+    std::cout << "  " << visiblePad("#",         5)
+                      << visiblePad("Játékos",   22)
+                      << visiblePad("Nyeremény", 16)
+                      << "Dátum\n";
+    std::cout << SEP << "\n";
 
     for (std::size_t i = 0; i < sorted.size(); ++i) {
-        std::cout << " " << (i + 1) << ". "
-                  << sorted[i].getName()  << " - "
-                  << sorted[i].getPrize() << " Ft ("
-                  << sorted[i].getDate()  << ")\n";
+        std::string name = sorted[i].getName();
+
+        // UTF-8-tudatos csonkítás 20 látható karakterre
+        std::size_t visLen = 0, byteEnd = 0;
+        for (; byteEnd < name.size(); ++byteEnd) {
+            if ((static_cast<unsigned char>(name[byteEnd]) & 0xC0) != 0x80) {
+                if (visLen == 20) break;
+                ++visLen;
+            }
+        }
+        name = name.substr(0, byteEnd);
+
+        std::string prizeText = formatPrize(sorted[i].getPrize()) + " Ft";
+
+        std::cout << "  " << visiblePad(std::to_string(i + 1) + ".", 5)
+                          << visiblePad(name, 22)
+                          << Color::BOLD_GREEN << visiblePad(prizeText, 16) << Color::RESET
+                          << sorted[i].getDate() << "\n";
     }
 
-    std::cout << "----------------------------------------------------------------\n";
+    std::cout << SEP << "\n";
 }

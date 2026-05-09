@@ -1,5 +1,5 @@
 /*======================================================================
-    game.h - Header file
+    game.h - Header
 ----------------------------------------------------------------------
     CÉL:
      - Fő játék osztály deklarációja, konstansok és metódusok
@@ -49,6 +49,8 @@ private:
     bool hasOrder;  // sorrendezős kérdés elérhető
     // Ha az egyik típus nincs betöltve, a másik típussal még lehessen játszani
 
+    int audienceValues[4]; // Közönség szavazatok (applyAudience tölti)
+
     // CÉL: Egy teljes játékmenet futtatása a kiválasztott módban
     void play(int mode);
 
@@ -86,6 +88,9 @@ public:
 
     // CÉL: Enter várakozás
     static void waitEnter();
+
+    // CÉL: Konzol törlése
+    static void clearScreen();
 };
 
 #endif

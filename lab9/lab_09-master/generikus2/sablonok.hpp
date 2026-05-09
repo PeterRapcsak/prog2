@@ -23,16 +23,20 @@ template <typename InputIterator>
 void printEach(InputIterator first, InputIterator last,
                std::ostream& os = std::cout,
                const char* sep = ", ") {
+
     if (first == last) {
         os << std::endl;
         return;
     }
+
     os << *first;
     ++first;
+
     while (first != last) {
         os << sep << *first;
         ++first;
     }
+
     os << std::endl;
 }
 
@@ -44,11 +48,14 @@ void printEach(InputIterator first, InputIterator last,
 /// @return - negatív elemek száma
 template <typename InputIterator>
 int szamol_ha_negativ(InputIterator first, InputIterator last) {
+
     int db = 0;
+
     while (first != last) {
         if (*first < 0) ++db;
         ++first;
     }
+    
     return db;
 }
 
@@ -80,8 +87,11 @@ public:
 /// @return - predikátumot kielégítő elemek száma
 template <typename InputIterator, typename Predicate>
 int szamol_ha(InputIterator first, InputIterator last, Predicate pred) {
+
     int db = 0;
+
     while (first != last) {
+        
         if (pred(*first)) ++db;
         ++first;
     }

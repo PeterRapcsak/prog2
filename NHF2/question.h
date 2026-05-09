@@ -68,6 +68,9 @@ public:
     // CÉL: Feleletválasztós formátumú kiírás
     void display() const override;
 
+    // CÉL: Kiírás elrejtett válaszokkal és közönség %-kal (nullptr = nem aktív)
+    void displayWithHints(int hidden0, int hidden1, const int* audience) const;
+
     // CÉL: Egybetűs válasz ellenőrzése
     bool checkAnswer(const std::string& input) const override;
 

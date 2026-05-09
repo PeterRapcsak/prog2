@@ -9,7 +9,11 @@
 #include <stdlib.h>     // atoi, rand, srand, strdup, realloc, free
 #include <string.h>     // strlen, strcpy, strncpy, strtok, strcspn, strchr
 #include <locale.h>     // setlocale (Konzolhoz)
+
+#ifdef _WIN32
 #include <windows.h>    // SetConsoleOutputCP, SetConsoleCP
+#endif
+
 #include <time.h>       // time, localtime, struct tm
 #include "game.h"       // saját header file
 #include "debugmalloc.h"

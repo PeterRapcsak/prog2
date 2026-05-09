@@ -4,7 +4,18 @@
     CÉL:
      - Game objektum létrehozása
      - Kérdések betöltése CSV fileokból
-     - Főmenü indítása
+     - Főmenü (loop) indítása
+    
+    Fordító parancs: 
+    PATH = az elérése az adott foldernek.
+    
+    g++ -Wall -Wextra -g3 \
+    "PATH/main.cpp" \
+    "PATH/question.cpp" \
+    "PATH/filemanager.cpp" \
+    "PATH/game.cpp" \
+    "PATH/highscore.cpp" \
+    -o "PATH/output/main"
 ======================================================================*/
 
 #include "game.h"
