@@ -1,8 +1,10 @@
 /*======================================================================
-    question.h - Header file
+    question.h - Kérdés osztályok deklarációja
 ----------------------------------------------------------------------
-    CÉL:
-     - Kérdés osztályok deklarációja (alap + leszármazott)
+    FELADAT:
+     - Question: absztrakt alap minden kérdéstípushoz
+     - ChooseQuestion: feleletválasztós, nehézség 1-12
+     - OrderQuestion: sorrendezős, 4 elem helyes sorrendbe rakása
 ======================================================================*/
 
 #ifndef QUESTION_H
@@ -11,17 +13,23 @@
 #include <string>
 #include <vector>
 
-//! ---------- KÉRDÉS OSZTÁLYOK ----------
+//! ---------- ALAP OSZTÁLY ----------
 
-// CÉL: Absztrakt osztály az összes kérdés típushoz
+// CÉL: Absztrakt alap, amelyből minden kérdéstípus örököl
 class Question {
 protected:
-    std::string question;               // Kérdés szövege
-    std::string category;               // Kérdés kategóriája
-    std::string correctAnswer;          // Helyes válasz
-    std::vector<std::string> answers;   // Válaszlehetőségek
+    std::string question;             // kérdés szövege
+    std::string category;             // téma (pl. "KONYHA")
+    std::string correctAnswer;        // helyes válasz kódja (pl. "B" vagy "CDAB")
+    std::vector<std::string> answers; // válaszlehetőségek [A, B, C, D]
 
-    // CÉL: Közös kérdés adatok inicializálása
+    /*
+        CÉL: Közös kérdésadatok inicializálása
+        BE: q       - kérdés szövege
+            cat     - kategória
+            correct - helyes válasz kódja
+            ans     - válaszlehetőségek (4 elem)
+    */
     Question(const std::string& q,
              const std::string& cat,
              const std::string& correct,
@@ -30,69 +38,82 @@ protected:
 public:
     virtual ~Question();
 
-    // CÉL: Kérdés + válaszlehetőségek kiírása
-    // Teljesen virtuális, mert kérdéstípusonként más a formátum
+    // CÉL: Kérdés + válaszlehetőségek kiírása (teljesen virtuális – típusonként más formátum)
     virtual void display() const = 0;
 
-    // CÉL: Játékos válaszának ellenőrzése
+    // CÉL: Játékos válaszának ellenőrzése (teljesen virtuális – típusonként más logika)
     virtual bool checkAnswer(const std::string& input) const = 0;
 
-    // CÉL: Kérdés szövegének lekérése
-    const std::string& getQuestion() const;
-
-    // CÉL: Kategória lekérése
-    const std::string& getCategory() const;
-
-    // CÉL: Helyes válasz kódjának lekérése
-    const std::string& getCorrectAnswer() const;
-
-    // CÉL: Válaszok lekérése
-    const std::vector<std::string>& getAnswers() const;
+    const std::string&              getQuestion()     const; // kérdés szöveg lekérése
+    const std::string&              getCategory()     const; // kategória lekérése
+    const std::string&              getCorrectAnswer()const; // helyes válasz kód lekérése
+    const std::vector<std::string>& getAnswers()      const; // összes válasz lekérése
 };
 
-// CÉL: Feleletválasztós kérdés nehézségi szinttel
+//! ---------- FELELETVÁLASZTÓS KÉRDÉS ----------
+
+// CÉL: Feleletválasztós kérdés nehézségi szinttel (1-12)
 class ChooseQuestion : public Question {
 private:
-    int difficulty;
+    int difficulty; // nehézségi szint; egyezik a játékszinttel (1 = 1. kérdés szintje)
 
 public:
-    // CÉL: Feleletválasztós kérdés létrehozása
+    /*
+        CÉL: Feleletválasztós kérdés létrehozása
+        BE: diff    - nehézségi szint (1-12)
+            q       - kérdés szövege
+            cat     - kategória
+            correct - helyes válasz betűje (pl. "C")
+            ans     - 4 válaszlehetőség [A, B, C, D]
+    */
     ChooseQuestion(int diff,
-                   const std::string& q,                    // Kérdés szövege
-                   const std::string& cat,                  // Kérdés kategóriája
-                   const std::string& correct,              // Helyes válasz ("B")
-                   const std::vector<std::string>& ans);    // Válaszlehetőségek
+                   const std::string& q,
+                   const std::string& cat,
+                   const std::string& correct,
+                   const std::vector<std::string>& ans);
 
     ~ChooseQuestion() override;
 
-    // CÉL: Feleletválasztós formátumú kiírás
+    // CÉL: Kérdés kiírása segítség nélkül (meghívja a displayWithHints-et hint nélkül)
     void display() const override;
 
-    // CÉL: Kiírás elrejtett válaszokkal és közönség %-kal (nullptr = nem aktív)
+    /*
+        CÉL: Kérdés kiírása 50:50 elrejtéssel és opcionális közönség %-kal
+        BE: hidden0, hidden1 - elrejtett válaszindexek (-1 = nem rejtett)
+            audience         - közönség szavazatok tömbje [A,B,C,D], nullptr ha nem aktív
+    */
     void displayWithHints(int hidden0, int hidden1, const int* audience) const;
 
-    // CÉL: Egybetűs válasz ellenőrzése
+    // CÉL: Egybetűs válasz ellenőrzése (pl. "B" == correctAnswer)
     bool checkAnswer(const std::string& input) const override;
 
-    // CÉL: Nehézségi szint lekérése
+    // CÉL: Nehézségi szint lekérése (1-12)
     int getDifficulty() const;
 };
 
-// CÉL: Sorrendezős kérdés
+//! ---------- SORRENDEZŐS KÉRDÉS ----------
+
+// CÉL: Sorrendezős kérdés – 4 elemet kell helyes sorrendbe rakni
 class OrderQuestion : public Question {
 public:
-    // CÉL: Sorrendezős kérdés létrehozása
-    OrderQuestion(const std::string& q,                    // Kérdés szövege
-                  const std::string& cat,                  // Kérdés kategóriája
-                  const std::string& correct,              // Helyes válasz ("CDAB")
-                  const std::vector<std::string>& ans);    // Válaszlehetőségek
+    /*
+        CÉL: Sorrendezős kérdés létrehozása
+        BE: q       - kérdés szövege (mit kell sorba rendezni)
+            cat     - kategória
+            correct - helyes sorrend kódként (pl. "CDAB")
+            ans     - 4 rendezendő elem [A, B, C, D]
+    */
+    OrderQuestion(const std::string& q,
+                  const std::string& cat,
+                  const std::string& correct,
+                  const std::vector<std::string>& ans);
 
     ~OrderQuestion() override;
 
-    // CÉL: Sorrendezős formátumú kiírás
+    // CÉL: Kérdés és elemek kiírása [SORRENDEZŐS] fejléccel
     void display() const override;
 
-    // CÉL: 4 betűs sorrend válasz ellenőrzése
+    // CÉL: 4 betűs sorrend válasz ellenőrzése (pl. "CDAB" == correctAnswer)
     bool checkAnswer(const std::string& input) const override;
 };
 

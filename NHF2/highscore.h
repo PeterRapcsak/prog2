@@ -1,8 +1,9 @@
 /*======================================================================
-    highscore.h - Header file
+    highscore.h - Dicsőséglista osztályok deklarációja
 ----------------------------------------------------------------------
-    CÉL:
-     - Dicsőséglista osztályok deklarációja
+    FELADAT:
+     - HighScoreEntry: egyetlen bejegyzés (név, dátum, nyeremény)
+     - HighScoreTable: lista kezelése – betöltés, mentés, megjelenítés
 ======================================================================*/
 
 #ifndef HIGHSCORE_H
@@ -11,56 +12,64 @@
 #include <string>
 #include <vector>
 
-//! ---------- DICSŐSÉGLISTA ----------
+//! ---------- BEJEGYZÉS ----------
 
-// CÉL: Egy dicsőséglista bejegyzés tárolása
+// CÉL: Egyetlen dicsőséglista rekord tárolása
 class HighScoreEntry {
 private:
-    std::string name;   // Játékos neve
-    std::string date;   // eredmény dátuma (pl. "2026-04-29")
-    int prize;          // Nyeremény összege
+    std::string name;  // játékos neve (max. 20 látható karakter)
+    std::string date;  // eredmény dátuma (pl. "2026/05/09")
+    int prize;         // elért nyeremény Ft-ban
 
 public:
-    // CÉL: Név, dátum és nyeremény eltárolása
+    /*
+        CÉL: Bejegyzés létrehozása
+        BE: name  - játékos neve
+            date  - dátum string
+            prize - nyeremény összege
+    */
     HighScoreEntry(const std::string& name, const std::string& date, int prize);
 
-    // CÉL: Játékos nevének lekérése
-    const std::string& getName() const;
+    const std::string& getName()  const; // játékos neve lekérése
+    const std::string& getDate()  const; // dátum lekérése
+    int                getPrize() const; // nyeremény lekérése
 
-    // CÉL: Dátum szöveg lekérése
-    // Ha c++11 felett vagyunk akkor "std::chrono::system_clock::now()" is jó lenne
-    const std::string& getDate() const;
-
-    // CÉL: Nyeremény lekérése
-    int getPrize() const;
-
-    // CÉL: Nyeremény szerinti összehasonlítás rendezéshez
+    // CÉL: Csökkenő rendezéshez szükséges összehasonlítás (std::sort-hoz)
     bool operator>(const HighScoreEntry& rhs) const;
 };
 
-// CÉL: Dicsőséglista betöltés / mentés / kiírás
+//! ---------- LISTA ----------
+
+// CÉL: Dicsőséglista betöltése, mentése, megjelenítése és törlése
 class HighScoreTable {
 private:
-    std::vector<HighScoreEntry> entries;
-    std::string filename;
+    std::vector<HighScoreEntry> entries; // betöltött bejegyzések
+    std::string filename;                // CSV fájl neve
 
 public:
-    // CÉL: Dicsőséglista objektum létrehozása CSV fájlhoz
+    /*
+        CÉL: Tábla létrehozása – konstruktor azonnal betölti a CSV-t
+        BE: filename - CSV fájl neve (alapértelmezett: "dicsoseglista.csv")
+    */
     explicit HighScoreTable(const std::string& filename = "dicsoseglista.csv");
 
-    // CÉL: Bejegyzések beolvasása fájlból
+    // CÉL: Bejegyzések beolvasása CSV fájlból (hibás sorokat kihagyja)
     void load();
 
-    // CÉL: Bejegyzések teljes visszaírása fájlba
+    // CÉL: Az összes bejegyzés visszaírása CSV fájlba (teljes felülírás)
     void save() const;
 
-    // CÉL: Új eredmény hozzáadása és mentése
+    /*
+        CÉL: Új eredmény hozzáadása az aktuális dátummal és azonnali mentése
+        BE: name  - játékos neve
+            prize - elért nyeremény Ft-ban
+    */
     void add(const std::string& name, int prize);
 
-    // CÉL: Dicsőséglista rendezett kiírása
+    // CÉL: Lista rendezett kiírása a konzolra (csökkenő nyeremény szerint)
     void display() const;
 
-    // CÉL: Lista törlése és mentése
+    // CÉL: Lista törlése memóriából és fájlból (csak a fejléc marad a CSV-ben)
     void reset();
 };
 
