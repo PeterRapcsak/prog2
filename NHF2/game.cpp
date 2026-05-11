@@ -36,6 +36,30 @@ namespace {
 // "Majd kelleni fog" dolgok
 static const string SEP = "────────────────────────────────────────────────────────────────";
 
+// CÉL: Egy központi random generátor
+std::mt19937& rng() {
+
+    // random_device -> random seed
+    // static miatt nem kell ujraindítani minden rng()-nél
+    static std::mt19937 generator(std::random_device{}()); // https://stackoverflow.com/questions/39288595/why-not-just-use-stdrandom-device
+
+    // Referenciát adunk vissza, hogy mindig ugyanazt a generátort használjuk
+    // NE generáljunk mindig új seedet
+    return generator;
+}
+
+
+// CÉL: Random int generálása két érték között
+int randomInt(int min, int max) {
+
+    // Mindkét határ benne van, tehát pld: randomInt(0, 3) -> 0, 1, 2 vagy 3
+    std::uniform_int_distribution<int> distribution(min, max);
+    // https://cplusplus.com/reference/random/uniform_int_distribution/
+
+    // Az előbbi random generátorral kérünk egy számot ebből az eloszlásból
+    return distribution(rng());
+}
+
 enum QuestionType {
     ChooseQuestionType,
     OrderQuestionType
@@ -140,11 +164,8 @@ vector<int> buildShuffledOrderIndexes(int count) {
         indexes.push_back(i);
     }
 
-    // Véletlenszám-generátor az aktuális idő alapján
-    std::mt19937 rng(time(nullptr));
-
     // Összekeverjük az indexeket (iterátorokkal)
-    std::shuffle(indexes.begin(), indexes.end(), rng);
+    std::shuffle(indexes.begin(), indexes.end(), rng());
 
     return indexes;
 }
@@ -234,7 +255,7 @@ Game::Game():
     used5050(false),    // Használta az 50:50 segítséget?
     usedAudience(false) // Használta a közönség segítséget?
 {
-    srand(time(nullptr)); // majd rand()-dal használjuk
+    rng(); // Random seed generálása
     hiddenResponses[0] = -1;
     hiddenResponses[1] = -1;
     audienceValues[0]  = 0;
@@ -403,7 +424,7 @@ void Game::play(int mode) {
 
                 // size_t -> int , ebből random indexet generálunk
                 int questionCount = static_cast<int>(chooseQuestions[currentLevel].size());
-                int randomIndex = rand() % questionCount;
+                int randomIndex = randomInt(0, questionCount - 1);
 
                 ChooseQuestion& question = chooseQuestions[currentLevel][randomIndex];
 
@@ -642,7 +663,7 @@ void Game::apply5050(ChooseQuestion& q) {
     }
 
     // Összekeverjük a rossz válaszokat
-    random_shuffle(wrongIndexes.begin(), wrongIndexes.end());
+    std::shuffle(wrongIndexes.begin(), wrongIndexes.end(), rng());
 
     // Az első két rossz választ elrejtjük
     hiddenResponses[0] = wrongIndexes[0];
@@ -669,7 +690,7 @@ void Game::applyAudience(ChooseQuestion& q) {
     }
 
     // A helyes válasz kapjon 30 és 60 közötti százalékot
-    audienceValues[correctIdx] = 30 + rand() % 31;
+    audienceValues[correctIdx] = randomInt(30, 60);
 
     // Ennyi maradt a rossz válaszokra
     int remaining = 100 - audienceValues[correctIdx];
@@ -684,14 +705,14 @@ void Game::applyAudience(ChooseQuestion& q) {
 
     // Összekeverjük a rossz válaszokat
     // Mivel az elsőnek van esélye a legtöbbet kapni, az utolsónak a legkevesebbet
-    random_shuffle(wrongIndexes.begin(), wrongIndexes.end());
+    std::shuffle(wrongIndexes.begin(), wrongIndexes.end(), rng());
 
     //? 1.
-    int first = rand() % (remaining + 1);
+    int first = randomInt(0, remaining);
     remaining -= first;
 
     //? 2.
-    int second = rand() % (remaining + 1);
+    int second = randomInt(0, remaining);
     remaining -= second;
 
     //? 3.
