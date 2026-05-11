@@ -4,7 +4,7 @@
     FELADAT:
      - Game osztály: teljes játékmenet vezérlése
      - Konstansok: szintszám, nyereménylétra
-     - Statikus segédeszközök: formatPrize, printSeparator, stb.
+     - Segédeszközök: formatPrize, printSeparator, stb.
 ======================================================================*/
 
 #ifndef GAME_H
@@ -24,14 +24,10 @@ public:
     static const int LEVELS = 12;          // szintek száma (kérdések száma egy játékban)
     static const int PRIZE_LADDER[LEVELS]; // nyereménylétra Ft-ban (5.000 -> 5.000.000)
 
-    // CÉL: Játék objektum alapállapotba hozása (srand inicializálás is itt történik)
+    // CÉL: Játék objektum alapállapotba hozása (srand init is itt történik)
     Game();
-
-    /*
-        CÉL: Kérdések betöltése mindkét CSV fájlból
-        BE: chooseFile - feleletválasztós kérdések CSV neve
-            orderFile  - sorrendezős kérdések CSV neve
-    */
+    
+    // CÉL: Kérdések betöltése mindkét CSV fájlból
     void loadQuestions(const std::string& chooseFile, const std::string& orderFile);
 
     // CÉL: Főmenü ciklus elindítása (addig fut, amíg a játékos ki nem lép)
@@ -40,10 +36,10 @@ public:
 private:
     //! --- KÉRDÉSEK ---
     std::vector<ChooseQuestion> chooseQuestions[LEVELS]; // feleletválasztós kérdések szint szerint (0-alapú)
-    std::vector<OrderQuestion>  orderQuestions;          // sorrendezős kérdések (szint-független pool)
+    std::vector<OrderQuestion>  orderQuestions;          // sorrendezős kérdések
     bool hasChoose; // van-e betöltött feleletválasztós kérdés
     bool hasOrder;  // van-e betöltött sorrendezős kérdés
-    // Ha az egyik típus hiányzik, a vegyes módban csak a másik fut
+    // Ha az egyik hiányzik, a vegyes módban csak a másik fut
 
     //! --- JÁTÉKOS ---
     std::string playerName;  // aktuális játékos neve

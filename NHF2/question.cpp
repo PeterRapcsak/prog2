@@ -98,15 +98,15 @@ void ChooseQuestion::displayWithHints(int hidden0, int hidden1, const int* audie
 
             // Közönség százalék kiírása, ha aktív
             if (audience != nullptr) {
-                cout << " ["
-                     << Color::BOLD_GREEN
+                cout << Color::BOLD_GREEN
+                     << " [" 
                      << audience[i] << "%";
 
                 if (audience[i] < 10) {
                     cout << " ";
                 }
 
-                cout << Color::RESET << "]";
+                cout << "]" << Color::RESET;
             }
 
             cout << " " << answers[static_cast<std::size_t>(i)] << "\n";
