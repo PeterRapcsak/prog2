@@ -18,8 +18,6 @@
 
 #include <algorithm> // shuffle
 #include <cctype>    // toupper
-#include <cstdlib>   // rand
-#include <ctime>     // time
 #include <iostream>  // konzol kiírás / bemenet
 #include <limits>    // numeric_limits
 #include <random>    // mt19937
@@ -46,6 +44,12 @@ std::mt19937& rng() {
     // Referenciát adunk vissza, hogy mindig ugyanazt a generátort használjuk
     // NE generáljunk mindig új seedet
     return generator;
+}
+
+// CÉL: Uj játéknál új random seed generálása
+void reseedRng() {
+    // de menő hogy std::mt19937-nek van .seed metódusa :D
+    rng().seed(std::random_device{}());
 }
 
 
@@ -202,8 +206,8 @@ QuestionType pickQuestionType(int mode, bool hasChoose, bool hasOrder, int level
 
 // CÉL: Kiírja a játék kimenetelét (megállt, nyert, veszített) és a nyereményt
 void printGameResult(
-    bool walkAway,              // Feladta?
-    bool gameOver,              // Veszített?
+    bool walkAway,              // Megállt?
+    bool gameOver,              // Játék loop vége?
     int currentLevel,           // Jelenlegi szint
     const string& playerName,   // Játékos neve
     int finalPrize) {           // Végső nyeremény (Nem itt számoljuk ki)
@@ -385,6 +389,7 @@ void Game::mainMenu() {
 
 void Game::play(int mode) {
     resetGameState();
+    reseedRng();
     clearScreen();
 
     playerName = getPlayerName();
@@ -594,7 +599,7 @@ void Game::askOrderQuestion(OrderQuestion& q) {
         q.display();
         printSeparator();
 
-        cout << "\nAdd meg a sorrendet 4 betűvel (pl. ABDC)\n";
+        cout << "\nAdd meg a sorrendet 4 betűvel (pld: ABDC)\n";
         cout << "   Q - Megállás\n";
         cout << "\nVálasz: ";
 
