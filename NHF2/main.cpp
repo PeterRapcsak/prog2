@@ -6,27 +6,19 @@
      - Kérdések betöltése CSV fileokból
      - Főmenü (loop) indítása
 
-    Fordítási parancs (PATH = projekt könyvtár):
-    g++ -std=c++11 -Wall -Wextra \
-        PATH/main.cpp PATH/question.cpp PATH/filemanager.cpp \
-        PATH/game.cpp PATH/highscore.cpp \
-        -o PATH/nhf2_main
+    //! Fordítási parancs:
+    //! g++ -std=c++11 -Wall -Wextra -o nhf2_main main.cpp game.cpp highscore.cpp question.cpp filemanager.cpp
 ======================================================================*/
 
 #include "game.h"
 
-// CÉL: CSV filenames konstansként – ha változnak, csak itt kell átírni
-const char* FILE_CHOOSE = "kerdesek.csv"; // feleletválasztós kérdések
-const char* FILE_ORDER  = "sorkerdesek.csv"; // sorrendezős kérdések
+// CÉL: CSV filenevek
+const char* FILE_CHOOSE = "src/kerdesek.csv";    // feleletválasztós kérdések
+const char* FILE_ORDER  = "src/sorkerdesek.csv"; // sorrendezős kérdések
 
-/*
-    CÉL: Program belépési pont
-     - Game példány létrehozása (konstruktor betölti a dicsőséglistát)
-     - Kérdések betöltése mindkét CSV fileból
-     - Főmenü elindítása (loop – addig fut, amíg a játékos ki nem lép)
-*/
+// CÉL: Program belépési pont
 int main() {
-    Game game;
+    Game game; // konstruktor betölti a dicsőséglistát
 
     game.loadQuestions(FILE_CHOOSE, FILE_ORDER); // CSV fileok betöltése kérdéstömbökbe
     game.mainMenu(); // főmenü ciklus indítása

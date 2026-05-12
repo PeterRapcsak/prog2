@@ -2,106 +2,139 @@
     question.cpp - Kérdés objektumok megvalósítása
 ----------------------------------------------------------------------
     FELADAT:
-     - Question: absztrakt alap osztály konstruktora és getter-ek
+     - Question: közös absztrakt alap osztály
+         - kérdés szövege
+         - kategória
+         - helyes válasz
+         - válaszlehetőségek
 
-     - ChooseQuestion: feleletválasztós (nehézség 1-12)
-         - display()          -> hint nélküli kiírás
-         - displayWithHints() -> 50:50 elrejtéssel, közönség %-kal
-         - checkAnswer()      -> egybetűs válasz ellenőrzése
+     - ChooseQuestion: feleletválasztós kérdés
+         - nehézségi szint
+         - kérdés kiírása simán vagy 50:50 / közönség segítséggel
+         - válasz ellenőrzése
 
-     - OrderQuestion: sorrendezős
-         - display()      -> kérdés és rendezendő elemek kiírása
-         - checkAnswer()  -> 4 betűs sorrend ellenőrzése
+     - OrderQuestion: sorrendezős kérdés
+         - rendezendő elemek kiírása
+         - 4 betűs sorrend ellenőrzése
+         - itt nincs segítség
 ======================================================================*/
 
 #include "question.h"
 #include "colors.h"
-#include <iostream> // cout
 
-// Egyesével importáljuk, hogy ne kelljen mindenhol std::-t írni
+#include <iostream> // konzol kiírás
+
 using std::string;
 using std::vector;
 using std::cout;
 
 //! ---------- ALAP OSZTÁLY ----------
 
-/*
-    CÉL: Közös kérdésadatok inicializálása (minden leszármazott ezt hívja)
-    BE: q       - kérdés szövege
-        cat     - kategória (pl. "KONYHA")
-        correct - helyes válasz kódja (pl. "B" vagy "CDAB")
-        ans     - válaszlehetőségek vektora (4 elem)
-*/
+
+// CÉL: Közös kérdés adatok eltárolása, NEM PÉLDÁNYOSÍTJUK
 Question::Question(
-    const string& q,
-    const string& cat,
-    const string& correct,
-    const vector<string>& ans)
+    const string& q,            // kérdés szövege
+    const string& cat,          // kategória
+    const string& correct,      // helyes válasz
+    const vector<string>& ans)  // válaszlehetőségek vektora
     : question(q),
       category(cat),
       correctAnswer(correct),
-      answers(ans) {}
+      answers(ans)
+{}
 
+// Virtuális destruktor, mert ebből örökölnek más osztályok
 Question::~Question() {}
 
-const string&         Question::getQuestion()      const { return question;      }
-const string&         Question::getCategory()      const { return category;      }
-const string&         Question::getCorrectAnswer() const { return correctAnswer; }
-const vector<string>& Question::getAnswers()       const { return answers;       }
+// CÉL: Kérdés lekérése
+const string& Question::getQuestion() const {
+    return question;
+}
+
+// CÉL: Kategória lekérése
+const string& Question::getCategory() const {
+    return category;
+}
+
+// CÉL: Helyes válasz lekérése
+const string& Question::getCorrectAnswer() const {
+    return correctAnswer;
+}
+
+// CÉL: Válaszlehetőségek lekérése
+const vector<string>& Question::getAnswers() const {
+    return answers;
+}
+
 
 //! ---------- FELELETVÁLASZTÓS KÉRDÉS ----------
 
 /*
     CÉL: Feleletválasztós kérdés létrehozása
-    BE: diff    - nehézségi szint (1-12, egyezik a játékszinttel)
-        q       - kérdés szövege
-        cat     - kategória
-        correct - helyes válasz betűje (pl. "C")
-        ans     - 4 válaszlehetőség [A, B, C, D]
+    MEGJEGYZÉS:
+        A közös adatokat az ősosztály kapja meg,
+        a nehézséget pedig ez az osztály tárolja.
 */
 ChooseQuestion::ChooseQuestion(
-    int diff,
-    const string& q,
-    const string& cat,
-    const string& correct,
-    const vector<string>& ans)
-    : Question(q, cat, correct, ans), difficulty(diff) {}
+    int diff,                   // nehézségi szint, 1-től 12-ig
+    const string& q,            // kérdés szövege
+    const string& cat,          // kategória
+    const string& correct,      // Helyes válasz betűje, pld: "A"
+    const vector<string>& ans)  // 4 válaszlehetőség: A, B, C, D        
+    : Question(q, cat, correct, ans),
+      difficulty(diff)
+{}
 
 ChooseQuestion::~ChooseQuestion() {}
 
-// CÉL: Kérdés kiírása hint nélkül – meghívja a displayWithHints-et semleges paraméterekkel
+// CÉL: Feleletválasztós kérdés sima kiírása
 void ChooseQuestion::display() const {
-    displayWithHints(-1, -1, nullptr); // -1 = nincs elrejtve, nullptr = nincs közönség %
-}
 
+    // Ugyanazt a kiíró függvényt használjuk, csak segítségek nélkül
+    // -1      -> nincs elrejtett válasz
+    // nullptr -> nincs közönség százalék
+    displayWithHints(-1, -1, nullptr);
+}
 /*
-    CÉL: Kérdés kiírása 50:50 elrejtéssel és opcionális közönség %-kal
-    BE: hidden0, hidden1 - az elrejtett válaszok indexei (0-3), -1 ha nincs
-        audience         - közönség szavazatok tömbje [A,B,C,D] %-ban,
-                           nullptr ha a közönség segítség nem aktív
-    MEGJEGYZÉS: Elrejtett opciók teljesen kimaradnak (nem halványulnak, hanem eltűnnek)
+    CÉL: Feleletválasztós kérdés kiírása segítségekkel
+    MEGJEGYZÉS:
+        hidden0 / hidden1 az elrejtett válaszok indexei.
+        audience lehet nullptr, ilyenkor nem írunk ki százalékot.
 */
-void ChooseQuestion::displayWithHints(int hidden0, int hidden1, const int* audience) const {
+void ChooseQuestion::displayWithHints(
+    int hidden0,
+    int hidden1,
+    const int* audience) const {
+
     cout << "  Téma: " << category << "\n\n";
     cout << "  " << Color::BOLD_YELLOW << question << Color::RESET << "\n\n";
 
+    // Csak akkor írjuk ki, ha tényleg megvan a 4 válasz
     if (answers.size() >= 4) {
+
+        // Végigmegyünk az A, B, C, D válaszokon
         for (int i = 0; i < 4; i++) {
+
+            // Ha ezt az opciót elrejtette az 50:50, akkor kihagyjuk
             if (i == hidden0 || i == hidden1) {
-                continue; // 50:50 elrejtett válasz kihagyása
+                continue;
             }
 
+            // Válasz betűjének kiírása
+            // 0 + 'A' -> A, 
+            // 1 + 'A' -> B, stb.
             cout << "  "
                  << Color::BOLD_YELLOW
                  << "[" << static_cast<char>('A' + i) << "]"
                  << Color::RESET;
 
-            // Közönség százalék kiírása, ha aktív
+            // Ha van közönség segítség, akkor kiírjuk mellé a százalékot is
             if (audience != nullptr) {
                 cout << Color::BOLD_GREEN
-                     << " [" 
+                     << " ["
                      << audience[i] << "%";
 
+                // Csak azért, hogy a 0-9% is szép legyen a konzolban
                 if (audience[i] < 10) {
                     cout << " ";
                 }
@@ -109,60 +142,65 @@ void ChooseQuestion::displayWithHints(int hidden0, int hidden1, const int* audie
                 cout << "]" << Color::RESET;
             }
 
+            // Maga a válasz szövege
             cout << " " << answers[static_cast<std::size_t>(i)] << "\n";
         }
     }
 }
 
-/*
-    CÉL: Egybetűs feleletválasztós válasz ellenőrzése
-    BE: input - a játékos válasza nagybetűsítve (pl. "B")
-    KI: true ha egyezik a helyes válasszal
-*/
+// CÉL: Feleletválasztós válasz ellenőrzése
 bool ChooseQuestion::checkAnswer(const string& input) const {
     return input == correctAnswer;
 }
 
-// CÉL: Nehézségi szint lekérése (1-12)
-int ChooseQuestion::getDifficulty() const { return difficulty; }
+// CÉL: Nehézségi szint lekérése
+int ChooseQuestion::getDifficulty() const {
+    return difficulty;
+}
+
 
 //! ---------- SORRENDEZŐS KÉRDÉS ----------
 
 /*
     CÉL: Sorrendezős kérdés létrehozása
-    BE: q       - kérdés szövege (mit kell sorba rendezni)
-        cat     - kategória
-        correct - helyes sorrend betűkódként (pl. "CDAB")
-        ans     - 4 rendezendő elem [A, B, C, D]
+    MEGJEGYZÉS:
+        Itt nincs difficulty, mert a sorrendezős kérdések
+        nincsenek külön szintekhez kötve. (Mindegyik elég nehéz)
 */
 OrderQuestion::OrderQuestion(
-    const string& q,
-    const string& cat,
-    const string& correct,
-    const vector<string>& ans)
-    : Question(q, cat, correct, ans) {}
+    const string& q,            // kérdés szövege
+    const string& cat,          // kategória
+    const string& correct,      // helyes sorrend, pld: "BDAC"
+    const vector<string>& ans)  // 4 rendezendő elem
+    : Question(q, cat, correct, ans)
+{}
 
 OrderQuestion::~OrderQuestion() {}
 
-// CÉL: Sorrendezős kérdés kiírása [SORRENDEZŐS] típusjelzéssel és a 4 rendezendő elemmel
+// CÉL: Sorrendezős kérdés kiírása
 void OrderQuestion::display() const {
-    cout << "  " << Color::BOLD_CYAN << "[SORRENDEZŐS]" << Color::RESET
+    cout << "  "
+         << Color::BOLD_CYAN << "[SORRENDEZŐS]" << Color::RESET
          << " Téma: " << category << "\n\n";
+
     cout << "  " << Color::BOLD_YELLOW << question << Color::RESET << "\n\n";
 
+    // Csak akkor írjuk ki, ha van legalább 4 elem
     if (answers.size() >= 4) {
-        for (int i = 0; i < 4; ++i) {
-            cout << "  " << Color::BOLD_YELLOW << "[" << static_cast<char>('A' + i) << "]"
-                 << Color::RESET << " " << answers[static_cast<std::size_t>(i)] << "\n";
+
+        // Végigmegyünk az A, B, C, D elemeken
+        for (int i = 0; i < 4; i++) {
+
+            cout << "  "
+                 << Color::BOLD_YELLOW
+                 << "[" << static_cast<char>('A' + i) << "]"
+                 << Color::RESET
+                 << " " << answers[static_cast<std::size_t>(i)] << "\n";
         }
     }
 }
 
-/*
-    CÉL: Sorrendezős válasz ellenőrzése
-    BE: input - a játékos sorrendje nagybetűsítve (pl. "CDAB")
-    KI: true ha egyezik a helyes sorrenddel
-*/
+// CÉL: Sorrendezős válasz ellenőrzése
 bool OrderQuestion::checkAnswer(const string& input) const {
     return input == correctAnswer;
 }

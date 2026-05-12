@@ -2,9 +2,21 @@
     question.h - Kérdés osztályok deklarációja
 ----------------------------------------------------------------------
     FELADAT:
-     - Question: absztrakt alap minden kérdéstípushoz
-     - ChooseQuestion: feleletválasztós, nehézség 1-12
-     - OrderQuestion: sorrendezős, 4 elem helyes sorrendbe rakása
+     - Question: közös absztrakt alap osztály
+         - kérdés szövege
+         - kategória
+         - helyes válasz
+         - válaszlehetőségek
+
+     - ChooseQuestion: feleletválasztós kérdés
+         - nehézségi szint
+         - kérdés kiírása simán vagy 50:50 / közönség segítséggel
+         - válasz ellenőrzése
+
+     - OrderQuestion: sorrendezős kérdés
+         - rendezendő elemek eltárolása
+         - 4 betűs sorrend ellenőrzése
+         - itt nincs segítség
 ======================================================================*/
 
 #ifndef QUESTION_H
@@ -15,105 +27,118 @@
 
 //! ---------- ALAP OSZTÁLY ----------
 
-// CÉL: Absztrakt alap, amelyből minden kérdéstípus örököl
+// CÉL: Közös absztrakt alap minden kérdéstípushoz, NEM PÉLDÁNYOSÍTJUK
 class Question {
 protected:
     std::string question;             // kérdés szövege
-    std::string category;             // téma (pl. "KONYHA")
-    std::string correctAnswer;        // helyes válasz kódja (pl. "B" vagy "CDAB")
-    std::vector<std::string> answers; // válaszlehetőségek [A, B, C, D]
+    std::string category;             // kategória
+    std::string correctAnswer;        // helyes válasz, pld: "B" vagy "CDAB"
+    std::vector<std::string> answers; // válaszlehetőségek / rendezendő elemek
 
     /*
-        CÉL: Közös kérdésadatok inicializálása
-        BE: q       - kérdés szövege
-            cat     - kategória
-            correct - helyes válasz kódja
-            ans     - válaszlehetőségek (4 elem)
+        CÉL: Közös kérdésadatok eltárolása
+        MEGJEGYZÉS:
+            Az alap osztály tárolja azokat az adatokat,
+            amik mindkét kérdéstípusnál kellenek
     */
-    Question(const std::string& q,
-             const std::string& cat,
-             const std::string& correct,
-             const std::vector<std::string>& ans);
+    Question(const std::string& q,                  // kérdés szövege
+             const std::string& cat,                // kategória
+             const std::string& correct,            // helyes válasz
+             const std::vector<std::string>& ans);  // válaszlehetőségek vektora
 
 public:
+    // Virtuális destruktor, mert ebből örökölnek más osztályok
     virtual ~Question();
 
-    // CÉL: Kérdés + válaszlehetőségek kiírása (teljesen virtuális – típusonként más formátum)
+    // CÉL: Kérdés kiírása
     virtual void display() const = 0;
 
-    // CÉL: Játékos válaszának ellenőrzése (teljesen virtuális – típusonként más logika)
+    // CÉL: Játékos válaszának ellenőrzése
     virtual bool checkAnswer(const std::string& input) const = 0;
 
-    const std::string&              getQuestion()     const; // kérdés szöveg lekérése
-    const std::string&              getCategory()     const; // kategória lekérése
-    const std::string&              getCorrectAnswer()const; // helyes válasz kód lekérése
-    const std::vector<std::string>& getAnswers()      const; // összes válasz lekérése
+    // CÉL: Kérdés lekérése
+    const std::string& getQuestion() const;
+
+    // CÉL: Kategória lekérése
+    const std::string& getCategory() const;
+
+    // CÉL: Helyes válasz lekérése
+    const std::string& getCorrectAnswer() const;
+
+    // CÉL: Válaszlehetőségek lekérése
+    const std::vector<std::string>& getAnswers() const;
 };
+
 
 //! ---------- FELELETVÁLASZTÓS KÉRDÉS ----------
 
-// CÉL: Feleletválasztós kérdés nehézségi szinttel (1-12)
+// CÉL: Feleletválasztós kérdés nehézségi szinttel
 class ChooseQuestion : public Question {
 private:
-    int difficulty; // nehézségi szint; egyezik a játékszinttel (1 = 1. kérdés szintje)
+    int difficulty; // nehézségi szint, 1-től 12-ig
 
 public:
     /*
         CÉL: Feleletválasztós kérdés létrehozása
-        BE: diff    - nehézségi szint (1-12)
-            q       - kérdés szövege
-            cat     - kategória
-            correct - helyes válasz betűje (pl. "C")
-            ans     - 4 válaszlehetőség [A, B, C, D]
+        MEGJEGYZÉS:
+            A közös adatokat az ősosztály kapja meg,
+            a nehézséget pedig ez az osztály tárolja.
     */
-    ChooseQuestion(int diff,
-                   const std::string& q,
-                   const std::string& cat,
-                   const std::string& correct,
-                   const std::vector<std::string>& ans);
+    ChooseQuestion(int diff,                                // nehézségi szint, 1-től 12-ig
+                   const std::string& q,                    // kérdés szövege
+                   const std::string& cat,                  // kategória
+                   const std::string& correct,              // helyes válasz betűje, pld: "A"
+                   const std::vector<std::string>& ans);    // válaszlehetőség: A, B, C, D
 
+    // CÉL: Feleletválasztós kérdés felszabadítása
     ~ChooseQuestion() override;
 
-    // CÉL: Kérdés kiírása segítség nélkül (meghívja a displayWithHints-et hint nélkül)
+    // CÉL: Feleletválasztós kérdés sima kiírása
     void display() const override;
 
     /*
-        CÉL: Kérdés kiírása 50:50 elrejtéssel és opcionális közönség %-kal
-        BE: hidden0, hidden1 - elrejtett válaszindexek (-1 = nem rejtett)
-            audience         - közönség szavazatok tömbje [A,B,C,D], nullptr ha nem aktív
+        CÉL: Feleletválasztós kérdés kiírása segítségekkel
+        MEGJEGYZÉS:
+            hidden0 / hidden1 az elrejtett válaszok indexei.
+            audience lehet nullptr, ilyenkor nem írunk ki százalékot.
     */
-    void displayWithHints(int hidden0, int hidden1, const int* audience) const;
+    void displayWithHints(
+        int hidden0,
+        int hidden1,
+        const int* audience
+    ) const;
 
-    // CÉL: Egybetűs válasz ellenőrzése (pl. "B" == correctAnswer)
+    // CÉL: Feleletválasztós válasz ellenőrzése
     bool checkAnswer(const std::string& input) const override;
 
-    // CÉL: Nehézségi szint lekérése (1-12)
+    // CÉL: Nehézségi szint lekérése
     int getDifficulty() const;
 };
 
+
 //! ---------- SORRENDEZŐS KÉRDÉS ----------
 
-// CÉL: Sorrendezős kérdés – 4 elemet kell helyes sorrendbe rakni
+// CÉL: Sorrendezős kérdés, ahol 4 elemet kell helyes sorrendbe rakni
 class OrderQuestion : public Question {
 public:
     /*
         CÉL: Sorrendezős kérdés létrehozása
-        BE: q       - kérdés szövege (mit kell sorba rendezni)
-            cat     - kategória
-            correct - helyes sorrend kódként (pl. "CDAB")
-            ans     - 4 rendezendő elem [A, B, C, D]
+        MEGJEGYZÉS:
+            Itt nincs difficulty, mert a sorrendezős kérdések
+            nincsenek külön szintekhez kötve.
     */
-    OrderQuestion(const std::string& q,
-                  const std::string& cat,
-                  const std::string& correct,
-                  const std::vector<std::string>& ans);
+    OrderQuestion(const std::string& q,                 // kérdés szövege
+                  const std::string& cat,               // kategória
+                  const std::string& correct,           // helyes sorrend, pld: "BDAC"
+                  const std::vector<std::string>& ans); // 4 rendezendő elem
 
+    // CÉL: Sorrendezős kérdés felszabadítása
     ~OrderQuestion() override;
 
-    // CÉL: Kérdés és elemek kiírása [SORRENDEZŐS] fejléccel
+    // CÉL: Sorrendezős kérdés kiírása
     void display() const override;
 
-    // CÉL: 4 betűs sorrend válasz ellenőrzése (pl. "CDAB" == correctAnswer)
+    // CÉL: Sorrendezős válasz ellenőrzése
     bool checkAnswer(const std::string& input) const override;
 };
 
