@@ -6,7 +6,7 @@
  */
 
 
-#define ELKESZULT 0
+#define ELKESZULT 5
 
 #include <iostream>
 #include <algorithm>
@@ -16,7 +16,7 @@
 #include "compat.hpp"
 #include "vektor.hpp"
 
-#if ELKESZULT >= 12
+#if ELKESZULT >= 5
 #include "mystack.hpp"
 #endif
 
@@ -58,35 +58,38 @@ int main() {
 
     try {
 
-#if ELESZULT >= 0
+#if ELKESZULT >= 0
         /// létrehozunk egy funktort a kiíráshoz
         ostreamFunctor<int> intout(cout, ", ");
         /// segítségével kiírjuk az it1 adatait
         cout << "it1: ";
 		forEach(it1, it1+10, intout);
 		cout << endl;
-#endif // ELEKSZULT >= 0
+#endif // ELKESZULT >= 0
 
 #if ELKESZULT >= 1
-/// 1. feladat:
+        /// 1. feladat:
         /// Kiírás std::for_each segítségével.
         /// A funktort a for_each paraméterlistáján példányosítsa!
         /// Próbálja ki!
         cout << "it1 (for_each): ";
-#error "itt kell kiirnia"
+        std::for_each(it1, it1+10, ostreamFunctor<int>(cout, ", "));
 		cout << endl;
 #endif // ELKESZULT >= 1
 
 #if ELKESZULT >= 2
         Vektor<double, 50> otos(8, 5.1);
         cout << "otos: ";
-#error "itt kell kiirnia"
+
+		std::for_each(otos.begin(), otos.end(), ostreamFunctor<double>(cout, ", "));
 		cout << endl;
+
 #endif // ELKESZULT >= 2
 
 #if ELKESZULT >= 3
         Vektor<double, 100> darr(dt1, dt1+7);
         cout << "darr: ";
+
 		std::for_each(darr.begin(), darr.end(), ostreamFunctor<double>(cout, ", "));
 		cout << endl;
 #endif // ELKESZULT >= 3
@@ -95,17 +98,17 @@ int main() {
         cout << "push_back proba" << endl;
         darr.push_back(100);
         cout << "darr: ";
-		std::for_each(darr.begin(), darr.end(), ostreamFunctor<double>(cout, ", "));
-		cout << endl;
+		    std::for_each(darr.begin(), darr.end(), ostreamFunctor<double>(cout, ", "));
+		    cout << endl;
 #endif // ELKESZULT >= 4
 
 #if ELKESZULT >= 5
         cout << "back: " << darr.back() << endl;
         darr.pop_back();
         cout << "darr: ";
-		std::for_each(darr.begin(), darr.end(), ostreamFunctor<double>(cout, ", "));
-		cout << endl;
-		cout << "empty: " << std::boolalpha << darr.empty() << endl;
+		    std::for_each(darr.begin(), darr.end(), ostreamFunctor<double>(cout, ", "));
+		    cout << endl;
+		    cout << "empty: " << std::boolalpha << darr.empty() << endl;
 #endif // ELKESZULT >= 5
 
 #if ELKESZULT >= 6
