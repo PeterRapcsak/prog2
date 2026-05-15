@@ -31,9 +31,6 @@ using std::cin;
 
 namespace {
 
-// "Majd kelleni fog" dolgok
-static const string SEP = "────────────────────────────────────────────────────────────────";
-
 // CÉL: Egy központi random generátor
 std::mt19937& rng() {
 
@@ -74,13 +71,15 @@ enum QuestionType {
 void printMainMenuScreen() {
 
     Game::clearScreen();
-    cout << SEP << "\n";
+    Game::printSeparator();
     cout << Color::BOLD_YELLOW << "                   LEGYEN ÖN IS MILLIOMOS!\n" << Color::RESET;
-    cout << SEP << "\n\n";
+    Game::printSeparator();
+    cout << "\n";
     cout << "  " << Color::BOLD_YELLOW << "[1]" << Color::RESET << " ÚJ JÁTÉK\n";
     cout << "  " << Color::BOLD_YELLOW << "[2]" << Color::RESET << " DICSŐSÉGLISTA\n";
     cout << "  " << Color::BOLD_YELLOW << "[3]" << Color::RESET << " KILÉPÉS\n";
-    cout << "\n" << SEP << "\n";
+    cout << "\n";
+    Game::printSeparator();
 }
 
 // CÉL: Egész szám olvasása, nem szám bemenet esetén -1-et ad vissza
@@ -179,7 +178,7 @@ void printLevelHeader(int level) {
     int questionNumber = level + 1;
     int prize = Game::PRIZE_LADDER[level];
 
-    cout << SEP << "\n";
+    Game::printSeparator();
 
     cout << "  "
          << Color::BOLD_YELLOW << questionNumber << ". KÉRDÉS"
@@ -189,7 +188,7 @@ void printLevelHeader(int level) {
          << Color::BOLD_GREEN << Game::formatPrize(prize) << " Ft"
          << Color::RESET << "\n";
 
-    cout << SEP << "\n";
+    Game::printSeparator();
 }
 
 // CÉL: Eldönti, hogy milyen típusú kérdés következzen
