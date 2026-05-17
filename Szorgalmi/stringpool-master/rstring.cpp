@@ -16,7 +16,7 @@ const char* NEPTUN = "T0R2E4";
 
 //! ------------ CTOR + DTOR ------------
 RString::RString(size_t capacity) {
-    if (capacity == 0) {
+    if (capacity <= 0) {
         throw NEPTUN;
     }
 
@@ -31,19 +31,21 @@ RString::RString(const char* str) {
         throw NEPTUN;
     }
 
+    // Lezáró \0 miatt +1 kell
     cap = std::strlen(str) + 1;
     data = new char[cap];
+    
     std::strcpy(data, str);
-    // Lezáró \0 miatt +1 kell
 }
 
 RString::RString(const char* str, size_t capacity) {
-    if (str == 0 || capacity == 0 || std::strlen(str) + 1 > capacity) {
+    if (str == 0 || capacity <= 0 || std::strlen(str) + 1 > capacity) {
         throw NEPTUN;
     }
 
     cap = capacity;
     data = new char[cap];
+    
     std::strcpy(data, str);
     // Ugyanaz mint az előbb
 }
@@ -52,6 +54,7 @@ RString::RString(const RString& other) {
 
     cap = other.cap;
     data = new char[cap];
+    
     std::strcpy(data, other.data);
     // Copy ctor, másik kapacitásával.
 }
@@ -74,12 +77,12 @@ RString::operator char*() const {
 }
 
 //! ------------ OPERÁTOROK ------------
-RString& RString::operator=(const char* str) {
-    if (str == 0 || std::strlen(str) + 1 > cap) {
+RString& RString::operator=(const char* rhs) {
+    if (rhs == 0 || std::strlen(rhs) + 1 > cap) {
         throw NEPTUN;
     }
     
-    std::strcpy(data, str);
+    std::strcpy(data, rhs);
     return *this;
 }
 
@@ -88,13 +91,14 @@ RString& RString::operator=(const RString& rhs) {
         return *this;
     }
 
-    char* new_data = new char[rhs.cap];
+    char* newData = new char[rhs.cap];
 
-    std::strcpy(new_data, rhs.data);
+    std::strcpy(newData, rhs.data);
 
-    // Átvitel a lhs-re
+    // Átvitel a lhs-ra
     delete[] data;
-    data = new_data;
+    
+    data = newData;
     cap = rhs.cap;
 
     return *this;

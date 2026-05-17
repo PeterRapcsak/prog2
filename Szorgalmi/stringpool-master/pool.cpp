@@ -16,25 +16,20 @@ using std::vector;
 const char* NEPTUN = "T0R2E4";
 
 //? PoolItem működése
-struct StringPool::PoolItem {
-    RString* str;   // Maga a string
-    bool available; // Szabad-e? 
+PoolItem::PoolItem(size_t capacity) {
+    str = new RString(capacity);
+    available = true;
+}
 
-    PoolItem(size_t capacity) {
-        str = new RString(capacity);
-        available = true;
-    }
-
-    ~PoolItem() {
-        delete str;
-    }
-};
+PoolItem::~PoolItem() {
+    delete str;
+}
 
 //? CTOR
 StringPool::StringPool(size_t obj_num, size_t init_cap) {
 
     for (size_t i = 0; i < obj_num; i++) {
-        insert_item(new PoolItem(init_cap));
+        insertItem(new PoolItem(init_cap));
     }
 }
 
@@ -48,7 +43,7 @@ StringPool::~StringPool() {
 
 // Egyszerű find függvény
 // itt most const_iterator-t hasznalok mert csak keresünk
-StringPool::PoolItem* StringPool::find_item(const RString& str) const {
+PoolItem* StringPool::findItem(const RString& str) const {
 
     for (vector<PoolItem*>::const_iterator i = items.begin(); i != items.end(); ++i) {
 
@@ -60,7 +55,7 @@ StringPool::PoolItem* StringPool::find_item(const RString& str) const {
 }
 
 // Find függvény, csak most a szabad item-ek között keresünk
-StringPool::PoolItem* StringPool::find_free(size_t capacity) const {
+PoolItem* StringPool::findFree(size_t capacity) const {
 
     for (vector<PoolItem*>::const_iterator i = items.begin(); i != items.end(); ++i) {
 
@@ -72,8 +67,8 @@ StringPool::PoolItem* StringPool::find_free(size_t capacity) const {
     return nullptr;
 }
 
-// 
-void StringPool::insert_item(PoolItem* item) {
+
+void StringPool::insertItem(PoolItem* item) {
 
     for (vector<PoolItem*>::iterator i = items.begin(); i != items.end(); ++i) {
 
@@ -83,6 +78,7 @@ void StringPool::insert_item(PoolItem* item) {
             return;
         }
     }
+
     items.push_back(item); // Különben a végére tesszük
 }
 
@@ -90,12 +86,12 @@ void StringPool::insert_item(PoolItem* item) {
 //! ------------ A FELADAT TÉNYLEGES MEGOLDÁSA ------------
 
 RString& StringPool::acquire(size_t capacity) {
-    if (capacity == 0) {
+    if (capacity <= 0) {
         throw NEPTUN;
     }
 
     // Próbálunk találni neki helyet a pool-ban
-    PoolItem* item = find_free(capacity);
+    PoolItem* item = findFree(capacity);
 
     // Ha nem sikerult, létrehozunk egy újat
     if (item == nullptr) {
@@ -103,12 +99,13 @@ RString& StringPool::acquire(size_t capacity) {
         item->available = false;
 
         // Betesszük a pool-ba a megfelelő helyre
-        insert_item(item);
+        insertItem(item);
         return *item->str;
     }
 
     // Ha találtunk helyet, akkor azt foglaljuk le
     item->available = false;
+
     *item->str = ""; // Reseteljük a stringet
     return *item->str;
 }
@@ -120,7 +117,7 @@ RString& StringPool::acquire(const char* str) {
 
     // Próbálunk találni neki helyet a pool-ban
     size_t needed = std::strlen(str) + 1;
-    PoolItem* item = find_free(needed);
+    PoolItem* item = findFree(needed);
 
     // Ha nem sikerult, létrehozunk egy újat
     if (item == nullptr) {
@@ -128,7 +125,7 @@ RString& StringPool::acquire(const char* str) {
         item->available = false;
 
         // Betesszük a pool-ba a megfelelő helyre
-        insert_item(item);
+        insertItem(item);
     } else {
         // Ha találtunk helyet, akkor azt foglaljuk le
         item->available = false;
@@ -142,7 +139,7 @@ RString& StringPool::acquire(const char* str) {
 //? Újra kiosztható-e a str objektum?
 bool StringPool::acquireable(const RString& str) const {
 
-    PoolItem* item = find_item(str); // Benne van már a pool-ban?
+    PoolItem* item = findItem(str); // Benne van már a pool-ban?
 
     return item != nullptr && item->available; // Ha igen és szabad akkor true
 }
@@ -150,7 +147,7 @@ bool StringPool::acquireable(const RString& str) const {
 //? Lenulláz egy objektumot, így újra kiosztható lesz
 void StringPool::release(RString& str) {
 
-    PoolItem* item = find_item(str); // Benne van már a pool-ban?
+    PoolItem* item = findItem(str); // Benne van már a pool-ban?
 
     if (item == nullptr) {
         return;
@@ -162,8 +159,8 @@ void StringPool::release(RString& str) {
 
 //? Hozzáfűzi str1 végére str2-t.
 RString& StringPool::append(RString& str1, const RString& str2) {
-    PoolItem* item1 = find_item(str1);
-    PoolItem* item2 = find_item(str2);
+    PoolItem* item1 = findItem(str1);
+    PoolItem* item2 = findItem(str2);
 
     // Ha nincs benne / nincs lefoglalva
     if (item1 == nullptr || item2 == nullptr || item1->available || item2->available) {
@@ -196,15 +193,17 @@ RString& StringPool::append(RString& str1, const RString& str2) {
     const char* text1 = str1;
     const char* text2 = str2;
 
-    char* text_result = result;
-    result = text1; // a megtalált stringbe másoljuk str1-et
+    char temp[needed];
+    std::strcpy(temp, text1);
 
     // és a végére fűzzük str2-t
     for (size_t i = 0; i < len2; i++) {
-        text_result[len1 + i] = text2[i];
+        temp[len1 + i] = text2[i];
     }
 
-    text_result[len1 + len2] = '\0'; // Lezárjuk
+    temp[len1 + len2] = '\0'; // Lezárjuk
+    result = temp; // Visszamásoljuk a result-ba
+
     return result; // Visszaadjuk
 }
 

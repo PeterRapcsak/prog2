@@ -15,6 +15,10 @@
 #include "memtrace.h"
 
 class RString {
+  private:
+    char* data; // Maga a karaktertömb
+    size_t cap; // Kapacitása (méret)
+
   public:
     // Létrehoz a megadott kapacitással egy karaktertömböt
     // A tömb első helyére egy \0-t rak
@@ -34,16 +38,12 @@ class RString {
     operator char*() const;
     // Bemásolja a karaktertömbbe a paraméterül kapott 
     // karakterláncot, ha nem fér bele, eldobja a neptun kódot
-    RString& operator=(const char* str);
-
-
+    RString& operator=(const char* rhs);
+    
+    //! Saját: 
+    RString& operator=(const RString& rhs); // Assignment operator
     RString(const RString& other); // Copy ctor
-    RString& operator=(const RString& other); // Assignment operator
     ~RString(); // dtor
-
-  private:
-    char* data; // Maga a karaktertömb
-    size_t cap; // Kapacitása (méret)
 };
 
 #endif

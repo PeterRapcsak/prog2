@@ -15,6 +15,18 @@
 #include "memtrace.h"
 #include "rstring.h"
 
+
+//! SEGÉD STRUKTÚRA
+class PoolItem {
+  public:
+    RString* str;   // Maga a string
+    bool available; // Szabad-e? 
+    
+    PoolItem(size_t capacity);
+
+    ~PoolItem();
+};
+
 class StringPool {
   public:
     // Létrehoz obj_num db RString obejktumot, 
@@ -69,14 +81,11 @@ class StringPool {
 
   private:
 
-    //! SEGÉD STRUKTÚRA
-    struct PoolItem;
-
     std::vector<PoolItem*> items;
 
-    PoolItem* find_item(const RString& str) const;
-    PoolItem* find_free(size_t capacity) const;
-    void insert_item(PoolItem* item);
+    PoolItem* findItem(const RString& str) const;
+    PoolItem* findFree(size_t capacity) const;
+    void insertItem(PoolItem* item);
 
     StringPool(const StringPool& other);
     StringPool& operator=(const StringPool& other);

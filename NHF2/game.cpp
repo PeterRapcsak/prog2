@@ -55,7 +55,8 @@ int randomInt(int min, int max) {
 
     // Mindkét határ benne van, tehát pld: randomInt(0, 3) -> 0, 1, 2 vagy 3
     std::uniform_int_distribution<int> distribution(min, max);
-    // https://cplusplus.com/reference/random/uniform_int_distribution/
+    // Seed-et használó C++ kód minta: 
+    // https://en.cppreference.com/cpp/numeric/random/uniform_int_distribution
 
     // Az előbbi random generátorral kérünk egy számot ebből az eloszlásból
     return distribution(rng());
@@ -86,12 +87,14 @@ void printMainMenuScreen() {
 int readInt() {
     int value;
 
+    // Buffer ürítések miatt ilyen komplikált
     if (cin >> value) {
         cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Ez egy buffer ami kiignorál minden maradék inputot
         // https://stackoverflow.com/questions/25020129/cin-ignorenumeric-limitsstreamsizemax-n
 
         return value;
     }
+
     cin.clear(); // cin hibás állapotának clear-elése
     cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ugyanúgy ignorálás
     return -1;
