@@ -14,6 +14,8 @@
 #include <cstdio>
 #include "memtrace.h"
 
+extern const char* NEPTUN;
+
 class RString {
   private:
     char* data; // Maga a karaktertömb

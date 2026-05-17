@@ -13,8 +13,6 @@
 
 using std::vector;
 
-const char* NEPTUN = "T0R2E4";
-
 //? PoolItem működése
 PoolItem::PoolItem(size_t capacity) {
     str = new RString(capacity);
@@ -193,7 +191,7 @@ RString& StringPool::append(RString& str1, const RString& str2) {
     const char* text1 = str1;
     const char* text2 = str2;
 
-    char temp[needed];
+    char* temp = new char[needed];
     std::strcpy(temp, text1);
 
     // és a végére fűzzük str2-t
@@ -203,6 +201,7 @@ RString& StringPool::append(RString& str1, const RString& str2) {
 
     temp[len1 + len2] = '\0'; // Lezárjuk
     result = temp; // Visszamásoljuk a result-ba
+    delete[] temp;
 
     return result; // Visszaadjuk
 }

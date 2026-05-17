@@ -11,7 +11,6 @@
 #include "rstring.h"
 #include <cstring>
 
-
 const char* NEPTUN = "T0R2E4";
 
 //! ------------ CTOR + DTOR ------------

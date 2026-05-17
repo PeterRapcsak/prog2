@@ -8,8 +8,8 @@ OBJECTS := $(SOURCES:%.cpp=%.o)
 main: $(OBJECTS)
 	$(CCX) $^ -g -o $@ -ldl
 	
-%.o: %.c $(HEADERS)
-	$(CCX) $(CXXFLAGS) -c $<
+%.o: %.cpp $(HEADERS)
+	$(CCX) $(CXXFLAGS) -c -o $@ $<
 	
 clean:
 	rm -rf $(OBJECTS) main
