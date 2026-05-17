@@ -165,7 +165,7 @@ bool isValidOrderInput(const string& input) {
 vector<int> buildShuffledOrderIndexes(int count) {
     vector<int> indexes;
 
-    // Feltöltjük: 0, 1, 2, 3 (jövőben flexibilisen updatelhető)
+    // Feltöltjük: 0, 1, 2, 3 ... (jövőben flexibilisen updatelhető)
     for (int i = 0; i < count; i++) {
         indexes.push_back(i);
     }
@@ -219,16 +219,13 @@ void printGameResult(
 
     if (walkAway) {
         cout << "\nMegálltál. Nyereményed: ";
-    }
-
-    else if (!gameOver && currentLevel >= Game::LEVELS) {
+    } else if (!gameOver && currentLevel >= Game::LEVELS) {
         cout << "\n" << Color::BOLD_YELLOW
              << "Gratulálok, " << playerName << "!\n"
              << Color::RESET;
 
         cout << "Megnyerted a főnyereményt: ";
-    }
-    else {
+    } else {
         cout << "\nJáték vége. Nyereményed: ";
     }
 
@@ -284,6 +281,7 @@ void Game::loadQuestions(const string& chooseFile, const string& orderFile) {
     orderQuestions = FileManager::loadOrderQuestions(orderFile);
 
     // Feleletválasztós kérdések vektorának kiürítése
+    // Csak 1x hívjuk de biztos ami biztos 
     for (int i = 0; i < LEVELS; i++) {
         chooseQuestions[i].clear();
     }
@@ -756,10 +754,16 @@ string Game::getPlayerName() {
         // UTF-8 kompatibilis hossz check
         // https://www.daniweb.com/programming/software-development/threads/474127/reading-and-checking-unusual-characters
         std::size_t visLen = 0;
-        for (unsigned char c : name) {
-            if ((c & 0xC0) != 0x80) ++visLen;
 
+        for (std::size_t i = 0; i < name.size(); ++i) {
+            unsigned char c = static_cast<unsigned char>(name[i]);
+
+            if ((c & 0xC0) != 0x80) {
+                ++visLen;
+            }
+            
             // Őszintén fogalmam sincs hogy csinalja ezt :<
+            //* Mostmár értem
         }
 
         if (visLen > 20) {
