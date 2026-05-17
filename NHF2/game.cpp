@@ -199,8 +199,9 @@ QuestionType pickQuestionType(int mode, bool hasChoose, bool hasOrder, int level
     if (!hasOrder)  return ChooseQuestionType; // Feleletválasztós
     if (!hasChoose) return OrderQuestionType;  // Sorrendezős
 
-    // Vegyes módban minden 3. szint sorrendezős
-    return ((level + 1) % 3 == 0) ? OrderQuestionType : ChooseQuestionType;
+    // Vegyes módban a 3. 7. és 11. kérdés sorrendezős, a többi feleletválasztós
+    // (azért nem minden 3. kérdés, mert akkor a 12. kérdés is sorrendezős lenne, ami azért tényleg elég nehéz lenne)
+    return (level + 1 == 3 || level + 1 == 7 || level + 1 == 11) ? OrderQuestionType : ChooseQuestionType;
 }
 
 // CÉL: Kiírja a játék kimenetelét (megállt, nyert, veszített) és a nyereményt
@@ -242,7 +243,7 @@ bool isHiddenBy5050(int selectedIndex, int hidden0, int hidden1) {
 //! ---------- KONSTANSOK ----------
 
 const int Game::PRIZE_LADDER[Game::LEVELS] = {
-    5000, 10000, 20000, 50000, 100000, 200000,
+    5000, 10000, 25000, 50000, 100000, 200000,
     300000, 500000, 800000, 1500000, 3000000, 5000000
 };
 

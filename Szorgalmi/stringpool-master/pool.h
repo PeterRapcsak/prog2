@@ -11,6 +11,7 @@
 #ifndef POOL_H
 #define POOL_H
 
+#include <vector>
 #include "memtrace.h"
 #include "rstring.h"
 
@@ -63,6 +64,22 @@ class StringPool {
 
     // visszaadja a szabad objektumok számát
     size_t free_size() const;
+
+    ~StringPool();
+
+  private:
+
+    //! SEGÉD STRUKTÚRA
+    struct PoolItem;
+
+    std::vector<PoolItem*> items;
+
+    PoolItem* find_item(const RString& str) const;
+    PoolItem* find_free(size_t capacity) const;
+    void insert_item(PoolItem* item);
+
+    StringPool(const StringPool& other);
+    StringPool& operator=(const StringPool& other);
 };
 
 #endif

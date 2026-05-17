@@ -7,7 +7,7 @@
      - Főmenü (loop) indítása
 
     //! Fordítási parancs:
-    //! g++ -std=c++11 -Wall -Wextra -o nhf2_main main.cpp game.cpp highscore.cpp question.cpp filemanager.cpp
+    //! g++ -std=c++11 -Wall -Wextra -o loim main.cpp game.cpp highscore.cpp question.cpp filemanager.cpp
 ======================================================================*/
 
 #include "game.h"

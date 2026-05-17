@@ -35,6 +35,15 @@ class RString {
     // Bemásolja a karaktertömbbe a paraméterül kapott 
     // karakterláncot, ha nem fér bele, eldobja a neptun kódot
     RString& operator=(const char* str);
+
+
+    RString(const RString& other); // Copy ctor
+    RString& operator=(const RString& other); // Assignment operator
+    ~RString(); // dtor
+
+  private:
+    char* data; // Maga a karaktertömb
+    size_t cap; // Kapacitása (méret)
 };
 
 #endif
