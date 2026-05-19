@@ -1,7 +1,6 @@
 #ifndef TEST_LEVEL_H
 #define TEST_LEVEL_H
 
-#define ELKESZULT 0
+#define ELKESZULT 4
 
 #endif // TEST_LEVEL_H
-

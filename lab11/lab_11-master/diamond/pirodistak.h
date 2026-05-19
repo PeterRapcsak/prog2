@@ -10,28 +10,103 @@
 #include <stdexcept>
 #include "palkalmazott.h"
 #include "irodistak.h"
-
-
-#error " itt készitse el a PCsopVez, PHatIdeju, PHatIdCsV és PHatIdCsVezH, osztályokat!"
-
 /**
  * Perzisztens csoportvezető
  */
+struct PHatIdeju : public HatIdeju, public Serializable {
+
+    // Konstruktor normál adatokból
+    PHatIdeju(const std::string& n, double fiz, time_t t)
+        : Alkalmazott(n, fiz),
+          HatIdeju(n, fiz, t)
+    {}
+
+    // Konstruktor sima HatIdeju objektumból
+    PHatIdeju(const HatIdeju& hi)
+        : Alkalmazott(hi),
+          HatIdeju(hi)
+    {}
+
+    // Kiírás streambe
+    void write(std::ostream& os) const {
+        os << "PHatIdeju" << std::endl;
+        os << getNev()   << std::endl;
+        os << getFiz()   << std::endl;
+        os << getIdo()   << std::endl;
+    }
+
+    // Beolvasás streamből
+    void read(std::istream& is) {
+        std::string tmp;
+        (is >> tmp).ignore(1);
+
+        // Típusnév ellenőrzése
+        if (tmp != "PHatIdeju")
+            throw std::out_of_range("PHatIdeju_R: " + tmp);
+
+        std::string n;
+        getline(is, n);
+        setNev(n);
+
+        double f;
+        (is >> f).ignore(1);
+        setFiz(f);
+
+        time_t t;
+        (is >> t).ignore(1);
+        setIdo(t);
+    }
+};
 
 
 /**
  * Perzisztens Határozott idejű alkalmazott
  */
+struct PHatIdeju : public HatIdeju, public Serializable {
+
+    // Konstruktor normál adatokból
+    PHatIdeju(const std::string& n, double fiz, time_t t)
+        : Alkalmazott(n, fiz),
+          HatIdeju(n, fiz, t)
+    {}
+
+    // Konstruktor sima HatIdeju objektumból
+    PHatIdeju(const HatIdeju& hi)
+        : Alkalmazott(hi),
+          HatIdeju(hi)
+    {}
+
+    // Kiírás streambe
+    void write(std::ostream& os) const {
+        os << "PHatIdeju" << std::endl;
+        os << getNev()   << std::endl;
+        os << getFiz()   << std::endl;
+        os << getIdo()   << std::endl;
+    }
+
+    // Beolvasás streamből
+    void read(std::istream& is) {
+        std::string tmp;
+        (is >> tmp).ignore(1);
+
+        // Típusnév ellenőrzése
+        if (tmp != "PHatIdeju")
+            throw std::out_of_range("PHatIdeju_R: " + tmp);
+
+        std::string n;
+        getline(is, n);
+        setNev(n);
+
+        double f;
+        (is >> f).ignore(1);
+        setFiz(f);
+
+        time_t t;
+        (is >> t).ignore(1);
+        setIdo(t);
+    }
+};
 
 
-/**
- * Perzisztens Határozott idejű csoportvezető
- */
-
-
-/**
- * Perzisztens Határozott idejű csoportvezető helyettes
- */
 
 #endif // IRODISTAK_H
-
