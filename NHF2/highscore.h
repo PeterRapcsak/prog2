@@ -69,7 +69,7 @@ public:
         MEGJEGYZÉS:
             A konstruktor azonnal be is tölti a CSV-t
     */
-    explicit HighScoreTable(const std::string& filename = "src/dicsoseglista.csv"); // default value
+    explicit HighScoreTable(const std::string& filename = "dicsoseglista.csv"); // default value
 
     // CÉL: Bejegyzések beolvasása CSV fájlból
     void load();

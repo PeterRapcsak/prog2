@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="ClonableHetero" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/Cpp Hetero" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-DMEMTRACE" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/Cpp Hetero" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-pedantic" />
+			<Add option="-Wall" />
+			<Add option="-Werror" />
+		</Compiler>
+		<Unit filename="bacterium.h" />
+		<Unit filename="clonable.h" />
+		<Unit filename="clonable_bacterium.h" />
+		<Unit filename="clonable_hetero_store.hpp" />
+		<Unit filename="clonable_hetero_test.cpp" />
+		<Unit filename="clonable_testclass.h" />
+		<Unit filename="gtest_lite.h" />
+		<Unit filename="memtrace.cpp" />
+		<Unit filename="memtrace.h" />
+		<Unit filename="testclass.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

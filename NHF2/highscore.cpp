@@ -253,8 +253,12 @@ void HighScoreTable::save() const {
 */
 void HighScoreTable::add(const string& name, int prize) {
 
+    // MIVEL name -> const, ezért temp változó kell
+    string temp = name;
+    if (name == "" || name == " " || name == "\t") temp = "Játékos";
+
     // Új rekord felvétele memóriába
-    entries.emplace_back(name, currentDate(), prize);
+    entries.emplace_back(temp, currentDate(), prize);
 
     // Azonnal mentjük, hogy kilépéskor se vesszen el
     save();
