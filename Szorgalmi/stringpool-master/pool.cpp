@@ -70,7 +70,7 @@ void StringPool::insertItem(PoolItem* item) {
 
     for (vector<PoolItem*>::iterator i = items.begin(); i != items.end(); ++i) {
 
-        // Az Rstring kapacitása alapján rendezzük a pool-t 
+        // Az Rstring kapacitása alapján rendezett a pool-t 
         if ((*i)->str->capacity() > item->str->capacity()) {
             items.insert(i, item); // HA igaz, akkor ide szúrjuk be
             return;

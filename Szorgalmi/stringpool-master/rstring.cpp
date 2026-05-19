@@ -38,7 +38,7 @@ RString::RString(const char* str) {
 }
 
 RString::RString(const char* str, size_t capacity) {
-    if (str == 0 || capacity <= 0 || std::strlen(str) + 1 > capacity) {
+    if (str == nullptr || capacity <= 0 || std::strlen(str) + 1 > capacity) {
         throw NEPTUN;
     }
 
@@ -77,7 +77,7 @@ RString::operator char*() const {
 
 //! ------------ OPERÁTOROK ------------
 RString& RString::operator=(const char* rhs) {
-    if (rhs == 0 || std::strlen(rhs) + 1 > cap) {
+    if (rhs == nullptr || std::strlen(rhs) + 1 > cap) {
         throw NEPTUN;
     }
     
