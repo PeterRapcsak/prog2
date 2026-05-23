@@ -6,6 +6,16 @@
      - Betöltés és statikus segédfüggvények kipróbálása (olykor rossz inputokkal is)
 ======================================================================*/
 
+#include "gtest_lite.h" //gtest_lite használata a tesztekhez
+
+/*
+    EXPECT_EQ    | egyenlőség teszt
+    EXPECT_TRUE  | igaz teszt
+    EXPECT_FALSE | hamis teszt
+    EXPECT_GT    | greater than teszt
+    SUCCEED      | sikeres teszt makro
+*/
+
 #include <vector>
 #include <iostream>
 
@@ -23,116 +33,137 @@ int tesztelek(bool run) {
     }
 
     //! ---------- GAME ----------
+
     //? Game segédfüggvényei hibás inputokkal
-    std::cout << "GAME formatPrize, 0 Ft: \t\t\t"      << Game::formatPrize(0)        << std::endl;
-    std::cout << "GAME formatPrize, -5000000 Ft: \t\t" << Game::formatPrize(-5000000) << std::endl;
-    std::cout << "GAME formatPrize, 999 Ft: \t\t\t"    << Game::formatPrize(999)      << std::endl << "\n";
+    TEST(Game, FormatPrize)
+        EXPECT_EQ("0", Game::formatPrize(0));
+        EXPECT_EQ("-5.000.000", Game::formatPrize(-5000000));
+        EXPECT_EQ("999", Game::formatPrize(999));
+    END
 
-    std::cout << "GAME isSafeLevel, index -1: \t\t"          << (Game::isSafeLevel(-1) ? "Biztos" : "Nem")  << std::endl;
-    std::cout << "GAME isSafeLevel, index 0: \t\t"           << (Game::isSafeLevel(0) ? "Biztos" : "Nem")   << std::endl;
-    std::cout << "GAME isSafeLevel, index 4 (5. szint): \t"  << (Game::isSafeLevel(4) ? "Biztos" : "Nem")   << std::endl;
-    std::cout << "GAME isSafeLevel, index 9 (10. szint): \t" << (Game::isSafeLevel(9) ? "Biztos" : "Nem")   << std::endl;
-    std::cout << "GAME isSafeLevel, index 100: \t\t"         << (Game::isSafeLevel(100) ? "Biztos" : "Nem") << std::endl << "\n";
+    TEST(Game, IsSafeLevel)
+        EXPECT_FALSE(Game::isSafeLevel(-1));
+        EXPECT_FALSE(Game::isSafeLevel(0));
+        EXPECT_TRUE(Game::isSafeLevel(4));   // 5. szint
+        EXPECT_TRUE(Game::isSafeLevel(9));   // 10. szint
+        EXPECT_FALSE(Game::isSafeLevel(67)); // 10. szint után
+    END
 
-    std::cout << "GAME getSafePrize, index -1: \t\t"     << Game::getSafePrize(-1)  << std::endl;
-    std::cout << "GAME getSafePrize, index 0: \t\t"      << Game::getSafePrize(0)   << std::endl;
-    std::cout << "GAME getSafePrize, index 4 (után): \t" << Game::getSafePrize(4)   << std::endl;
-    std::cout << "GAME getSafePrize, index 9 (után): \t" << Game::getSafePrize(9)   << std::endl;
-    std::cout << "GAME getSafePrize, index 100: \t\t"    << Game::getSafePrize(100) << std::endl << "\n";
-
-
-    std::vector<std::string> temp = {"optA", "optB", "optC", "optD"};
+    TEST(Game, GetSafePrize)
+        EXPECT_EQ(0, Game::getSafePrize(-1));
+        EXPECT_EQ(0, Game::getSafePrize(0));
+        EXPECT_EQ(100000, Game::getSafePrize(4));   // 5. szint után
+        EXPECT_EQ(1500000, Game::getSafePrize(9));  // 10. szint után
+        EXPECT_EQ(1500000, Game::getSafePrize(67)); // 10. szint után
+    END
 
 
     //! ---------- CHOOSE QUESTION ----------
+
     //? Hibás input: CHOOSE class 
-    ChooseQuestion badChoose(0, "", "", "A", temp); // A helyes vélasz = 'A'
+    TEST(ChooseQuestion, CheckAnswer)
+        std::vector<std::string> temp = {"optA", "optB", "optC", "optD"};
+        ChooseQuestion badChoose(0, "", "", "A", temp); // A helyes válasz = 'A'
 
-    std::cout << "CHOOSE class, hibás input: 'Z'\t\t";
-    if (badChoose.checkAnswer("Z"))
-        std::cout << "Elfogadva"  << std::endl;
-    else
-        std::cout << "Elutasítva" << std::endl;
+        EXPECT_FALSE(badChoose.checkAnswer("Z")); // hibás input
+        EXPECT_TRUE(badChoose.checkAnswer("A"));  // helyes input
+    END
 
-    std::cout << "CHOOSE class, helyes input: 'A'\t\t";
-    if (badChoose.checkAnswer("A"))
-        std::cout << "Elfogadva"  << std::endl;
-    else
-        std::cout << "Elutasítva" << std::endl;
+    TEST(ChooseQuestion, GetDifficulty)
+        std::vector<std::string> temp = {"optA", "optB", "optC", "optD"};
+        ChooseQuestion q(5, "Teszt kérdés", "Kategória", "B", temp);
+        
+        EXPECT_EQ(5, q.getDifficulty());
+    END
 
 
     //! ---------- ORDER QUESTION ----------
+
     //? Hibás input: ORDER class
-    OrderQuestion badOrder("Valami bla bla", "cat", "ABCD", temp); // A helyes vélasz = "ABCD"
+    TEST(OrderQuestion, CheckAnswer)
+        std::vector<std::string> temp = {"optA", "optB", "optC", "optD"};
+        OrderQuestion badOrder("Valami bla bla", "cat", "ABCD", temp); // A helyes válasz = "ABCD"
 
-    std::cout << "ORDER class, hibás input: 'asdf1'\t";
-    if (badOrder.checkAnswer("AB"))
-        std::cout << "Elfogadva"  << std::endl;
-    else
-        std::cout << "Elutasítva" << std::endl;
-
-    std::cout << "ORDER class, hibás input: 'ABCD'\t";
-    if (badOrder.checkAnswer("ABCD"))
-        std::cout << "Elfogadva"  << std::endl;
-    else
-        std::cout << "Elutasítva" << std::endl;
+        EXPECT_FALSE(badOrder.checkAnswer("AB"));  // hibás input
+        EXPECT_TRUE(badOrder.checkAnswer("ABCD")); // helyes input
+    END
 
 
     //! ---------- LOADING ----------
+
     //? Nincs file / rossz path
-    std::cout << "CHOOSE QUESTION - rossz path: ";
-    std::vector<ChooseQuestion> missingChoose = FileManager::loadChooseQuestions("hajnal.csv");
+    TEST(FileManager, LoadChooseQuestions_MissingFile)
+        std::vector<ChooseQuestion> missingChoose = FileManager::loadChooseQuestions("hajnal.csv");
+        EXPECT_TRUE(missingChoose.empty()) << "Nem töltött be semmit";
+    END
 
-    if (missingChoose.empty())
-        std::cout << "\t\tNem töltött be semmit"   << std::endl;
-    else
-        std::cout << "\t\tVan adat :<" << std::endl;
-
-
-    std::cout << "ORDER QUESTION - rossz path: ";
-    std::vector<OrderQuestion> missingOrder = FileManager::loadOrderQuestions("kettővan.csv");
-
-    if (missingOrder.empty())
-        std::cout << "\t\tNem töltött be semmit"   << std::endl;
-    else
-        std::cout << "\t\tVan adat :<" << std::endl;
+    TEST(FileManager, LoadOrderQuestions_MissingFile)
+        std::vector<OrderQuestion> missingOrder = FileManager::loadOrderQuestions("kettővan.csv");
+        EXPECT_TRUE(missingOrder.empty()) << "Nem töltött be semmit";
+    END
 
 
     //? Kérdések betöltése fileból
-    std::vector<ChooseQuestion> choose = FileManager::loadChooseQuestions("kerdesek.csv");
-    std::vector<OrderQuestion> order = FileManager::loadOrderQuestions("sorkerdesek.csv");
+
+    // Ezt egy jó 20p volt mire megoldottam
+    // 'U' kell a végére mert size_t-t ad vissza a .size() és int-tel akartam comparelnni
+    // ....
+    TEST(FileManager, LoadChooseQuestions)
+        std::vector<ChooseQuestion> choose = FileManager::loadChooseQuestions("kerdesek.csv");
+        EXPECT_GT(choose.size(), 0U) << "Feleletválasztós kérdések betöltve";
+    END
+
+    TEST(FileManager, LoadOrderQuestions)
+        std::vector<OrderQuestion> order = FileManager::loadOrderQuestions("sorkerdesek.csv");
+        EXPECT_GT(order.size(), 0U) << "Sorrendezős kérdések betöltve";
+    END
+
 
     //? Betöltött kérdések száma
-    std::cout << "Feleletválasztós kérdések: \t\t"<< choose.size() << std::endl;
-    std::cout << "Sorrendezős kérdések: \t\t\t"<< order.size()     << std::endl;
+
+    TEST(FileManager, QuestionCounts)
+        std::vector<ChooseQuestion> choose = FileManager::loadChooseQuestions("kerdesek.csv");
+        std::vector<OrderQuestion> order = FileManager::loadOrderQuestions("sorkerdesek.csv");
+        
+        EXPECT_GT(choose.size(), 0U); 
+        EXPECT_GT(order.size(), 0U);  
+    END
+
 
 
     //! ---------- DICSŐSÉGLISTA ----------
+
     //? HighScoreTable üres / negatív nyeremény
-    std::cout << "\nHIGHSCORE TABLE - üres név: \t\t";
-    HighScoreTable testTable("test.csv");
-    testTable.add("", 500000);
-    std::cout << "Hozzáadva" << std::endl;
+    TEST(HighScoreTable, AddEmptyName)
+        HighScoreTable testTable("test.csv");
+        testTable.add("", 500000); // üres név
+        SUCCEED() << "Üres név hozzáadva";
+    END
 
-    std::cout << "HIGHSCORE TABLE - negatív nyeremény: \t";
-    testTable.add("Negativ", -100000);
-    std::cout << "Hozzáadva" << std::endl;
+    TEST(HighScoreTable, AddNegativePrize)
+        HighScoreTable testTable("test.csv");
+        testTable.add("Negativ", -100000); // negatív nyeremény
+        SUCCEED() << "Negatív nyeremény hozzáadva";
+    END
 
-    std::cout << "HIGHSCORE TABLE - nulla nyeremény: \t";
-    testTable.add("Nulla", 0);
-    std::cout << "Hozzáadva" << std::endl;
+    TEST(HighScoreTable, AddZeroPrize)
+        HighScoreTable testTable("test.csv");
+        testTable.add("Nulla", 0); // nulla nyeremény
+        SUCCEED() << "Nulla nyeremény hozzáadva";
+    END
 
 
     //! ---------- DICSŐSÉGLISTA CHECK ----------
 
-    HighScoreTable table("test.csv");
-
-    table.load();
-    table.display();
+    TEST(HighScoreTable, LoadAndDisplay)
+        HighScoreTable table("test.csv");
+        table.load();
+        table.display();
+        SUCCEED() << "Dicsőséglista betöltve és kiírva";
+    END
 
 
     std::cout << "\nTeszt vége\n";
-
     Game::waitEnter(); // el is lehessen olvasni a teszt eredményét
 
     return 1;

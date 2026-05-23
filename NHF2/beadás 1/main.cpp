@@ -24,7 +24,8 @@ int main() {
     
     // TESZTELŐ FÜGGVÉNY, ha nem akarjuk futtatni akkor csak simán írjuk át tesztelek(false)-ra
     // test.cpp file-t futtatja
-    tesztelek(false);
+    //! gtest_lite használtaával
+    tesztelek(true);
 
 
     Game game; // konstruktor betölti a dicsőséglistát
