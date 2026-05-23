@@ -24,6 +24,8 @@
 #include "highscore.h"
 #include "question.h"
 
+using std::string;
+
 //! ---------- TESZTPROGRAM ----------
 
 // Visszatérési érték: 0 = siker/nem futtatjuk, 1 = futtattuk
@@ -36,9 +38,9 @@ int tesztelek(bool run) {
 
     //? Game segédfüggvényei hibás inputokkal
     TEST(Game, FormatPrize)
-        EXPECT_EQ("0", Game::formatPrize(0));
-        EXPECT_EQ("-5.000.000", Game::formatPrize(-5000000));
-        EXPECT_EQ("999", Game::formatPrize(999));
+        EXPECT_EQ(string("0"), Game::formatPrize(0));
+        EXPECT_EQ(string("-5.000.000"), Game::formatPrize(-5000000));
+        EXPECT_EQ(string("999"), Game::formatPrize(999));
     END
 
     TEST(Game, IsSafeLevel)

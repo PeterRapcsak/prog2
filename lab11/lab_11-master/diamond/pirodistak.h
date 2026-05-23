@@ -219,4 +219,4 @@ struct PHatIdCsVezH : public HatIdCsVezH, public Serializable {
 
 
 
-#endif // PIRODISTAK_H
+#endif // DIAMOND_PIRODISTAK_H
