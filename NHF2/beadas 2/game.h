@@ -5,13 +5,11 @@
      - Game osztály: teljes játékmenet vezérlése
      - Konstansok: szintszám, nyereménylétra
      - Segédeszközök: formatPrize, printSeparator, stb.
-     - Random generátor és input segédek is itt vannak (Game statikus metódusok)
 ======================================================================*/
 
 #ifndef GAME_H
 #define GAME_H
 
-#include <random>
 #include <string>
 #include <vector>
 
@@ -30,7 +28,7 @@ public:
     Game();
     // Minden játék elején random seed = A jövőben lehet integrálni a játékba
     // seed kezelést, pld: ha valaki ugyanazt a játékot akarja újrajátszani
-
+    
     // CÉL: Kérdések betöltése mindkét CSV fájlból
     void loadQuestions(const std::string& chooseFile, const std::string& orderFile);
 
@@ -53,30 +51,36 @@ private:
     int  currentLevel; // aktuális szintindex (0 - LEVELS-1)
     int  finalPrize;   // végső nyeremény (biztos szint vagy aktuális szint)
     bool gameOver;     // Játék loop vége?
-    bool walkAway;     // Megállt?
+    bool walkAway;     // Megállt? 
 
-    //! --- SEGÍTSÉGEK ÁLLAPOT ---
-    // A ChooseQuestion::ask() referencián keresztül módosítja, és így
-    // a következő kérdésnél is tudja hogy már felhasználta-e
-    bool used5050;     // Használta az 50:50 segítséget?
-    bool usedAudience; // Használta a közönség segítséget?
-
-    //! --- KÉRDÉSTÍPUS ENUM ---
-    enum QuestionType {
-        ChooseQuestionType,
-        OrderQuestionType
-    };
+    //! --- SEGÍTSÉGEK ---
+    bool used5050;           // Használta az 50:50 segítséget?
+    bool usedAudience;       // Használta a közönség segítséget?
+    int  hiddenResponses[2]; // 50:50 által elrejtett válaszok indexei (-1 = nincs elrejtve)
+    int  audienceValues[4];  // közönség szavazatok [A, B, C, D] %-ban
 
     //! --- PRIVÁT METÓDUSOK ---
 
     /*
         CÉL: Teljes játékmenet lebonyolítása
-        BE: mode
+        BE: mode 
             1 = feleletválasztós
             2 = sorrendezős
             3 = vegyes
     */
     void play(int mode);
+
+    // CÉL: Feleletválasztós kérdés
+    void askChooseQuestion(ChooseQuestion& q);
+
+    // CÉL: Sorrendezős kérdés
+    void askOrderQuestion(OrderQuestion& q);
+
+    // 50:50 segítség: 2 véletlenszerű helytelen válasz elrejtése
+    void apply5050(ChooseQuestion& q);
+
+    // Közönség segítség: pseudo-random szavazateloszlás generálása
+    void applyAudience(ChooseQuestion& q);
 
     // CÉL: Minden játékállapot-változó nullázása új játék előtt
     void resetGameState();
@@ -86,25 +90,6 @@ private:
         KI: A megadott név; üres bemenet -> "Jatekos"
     */
     std::string getPlayerName();
-
-    /*
-        CÉL: Eldönti, hogy milyen típusú kérdés következzen
-        MEGJEGYZÉS:
-            mode + level + a kérdéshalmazok megléte alapján
-    */
-    QuestionType pickQuestionType(int mode, int level) const;
-
-    // CÉL: A teljes "kérdés blokk" lefutása az adott szinten
-    // KI: true = mehet tovább a következő szint, false = vége a játéknak
-    bool runOneLevel(int mode,
-                     std::vector<int>& orderQuestionIndexes,
-                     std::size_t& nextOrderQuestion);
-
-    // CÉL: Játék eredményének kiírása (megállt / nyert / veszített)
-    void printGameResult() const;
-
-    // CÉL: Főmenüben a dicsőséglista almenü
-    void showHighScoreMenu();
 
 public:
     //! --- STATIKUS SEGÉDESZKÖZÖK ---
@@ -122,7 +107,7 @@ public:
         KI: igaz ha 4 (5. kérdés) vagy 9 (10. kérdés)
     */
     static bool isSafeLevel(int index);
-
+        
     // CÉL: Rossz válasz esetén a garantált nyeremény visszaadása
     static int getSafePrize(int index);
 
@@ -134,25 +119,6 @@ public:
 
     // CÉL: Konzol törlése ANSI escape kóddal
     static void clearScreen();
-
-    // CÉL: Szint fejlécének kiírása (szintszám + tét)
-    static void printLevelHeader(int level);
-
-    // CÉL: Központi random generátor (singleton stílusban)
-    // MEGJEGYZÉS: Referenciát adunk, hogy mindig ugyanazt használjuk
-    static std::mt19937& rng();
-
-    // CÉL: Új random seed generálása (új játék elején)
-    static void reseedRng();
-
-    // CÉL: Random int generálása két érték között (mindkét határ benne van)
-    static int randomInt(int min, int max);
-
-    // CÉL: Egész szám olvasása, nem szám bemenet esetén -1
-    static int readInt();
-
-    // CÉL: Minden karaktert nagybetűsít (kérdezésnél kell)
-    static void normalizeInput(std::string& input);
 };
 
 #endif

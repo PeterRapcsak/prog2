@@ -178,9 +178,7 @@ bool HighScoreEntry::operator>(const HighScoreEntry& rhs) const {
     MEGJEGYZÉS:
         A konstruktor azonnal be is tölti a CSV-t.
 */
-HighScoreTable::HighScoreTable(const string& filename)
-    : filename(filename)
-{
+HighScoreTable::HighScoreTable(const string& filename) : filename(filename) {
     load();
 }
 
@@ -255,6 +253,10 @@ void HighScoreTable::save() const {
 */
 void HighScoreTable::add(const string& name, int prize) {
 
+    if(prize < 0) {
+        return; // Negatív nyereményt nem adunk hozzá
+    } //? A teszthez kell
+
     // MIVEL name -> const, ezért temp változó kell
     string temp = name;
     if (name == "" || name == " " || name == "\t") temp = "Játékos";
@@ -266,14 +268,17 @@ void HighScoreTable::add(const string& name, int prize) {
     save();
 }
 
-// CÉL: Bejegyzések száma
-std::size_t HighScoreTable::size() const {
-    return entries.size();
+// CÉL: Dicsőséglista törlése memóriából és fájlból
+void HighScoreTable::reset() {
+    entries.clear();
+
+    // Üres lista mentése -> csak a fejléc marad a CSV-ben
+    save();
 }
 
-// CÉL: Adott indexű bejegyzés (NEM rendezett, hanem betöltési sorrend!)
-const HighScoreEntry& HighScoreTable::at(std::size_t index) const {
-    return entries[index]; // ha index out of bounds, az UB, de teszt szempontjából oké
+// CÉL: A dicsőséglista elemeinek száma getter
+std::size_t HighScoreTable::size() const {
+    return entries.size();
 }
 
 // CÉL: Dicsőséglista törlése memóriából és fájlból

@@ -7,18 +7,15 @@
          - kategória
          - helyes válasz
          - válaszlehetőségek
-         - virtuális ask() - itt zajlik a kérdezés UI loop-ja
 
      - ChooseQuestion: feleletválasztós kérdés
          - nehézségi szint
          - kérdés kiírása simán vagy 50:50 / közönség segítséggel
          - válasz ellenőrzése
-         - ask() override: 50:50, közönség, A-D választás
 
      - OrderQuestion: sorrendezős kérdés
          - rendezendő elemek eltárolása
          - 4 betűs sorrend ellenőrzése
-         - ask() override: 4 betűs sorrend bekérése
          - itt nincs segítség
 ======================================================================*/
 
@@ -32,18 +29,6 @@
 
 // CÉL: Közös absztrakt alap minden kérdéstípushoz, NEM PÉLDÁNYOSÍTJUK
 class Question {
-public:
-    /*
-        CÉL: Egy ask() loop kimenetele a Game felé
-        MEGJEGYZÉS:
-            Így a Game nem foglalkozik a UI-jal, csak a végeredménnyel.
-    */
-    enum AskResult {
-        CORRECT,    // helyes válasz, megy tovább a következő szintre
-        WRONG,      // rossz válasz, vége a játéknak
-        WALK_AWAY   // a játékos feladta (Q)
-    };
-
 protected:
     std::string question;             // kérdés szövege
     std::string category;             // kategória
@@ -71,19 +56,6 @@ public:
     // CÉL: Játékos válaszának ellenőrzése
     virtual bool checkAnswer(const std::string& input) const = 0;
 
-    /*
-        CÉL: Kérdezés UI loop (input bekérés + helyesség ellenőrzés)
-        MEGJEGYZÉS:
-            Ezt overrideolja a Choose és Order, mert eltérő a bemenet
-            és a segítségek. Így a Game::play szépen polymorph módon
-            csak meghív egy ask()-ot, nem switchel kérdéstípus szerint.
-        BE: currentLevel   - aktuális szint (header kiíráshoz)
-            used5050       - referencia, használt-e már 50:50-et (Choose-nál kell)
-            usedAudience   - referencia, használt-e már közönséget (Choose-nál kell)
-        KI: AskResult - CORRECT / WRONG / WALK_AWAY
-    */
-    virtual AskResult ask(int currentLevel, bool& used5050, bool& usedAudience) = 0;
-
     // CÉL: Kérdés lekérése
     const std::string& getQuestion() const;
 
@@ -104,14 +76,6 @@ public:
 class ChooseQuestion : public Question {
 private:
     int difficulty; // nehézségi szint, 1-től 12-ig
-
-    // CÉL: 50:50 segítség alkalmazása (2 helytelen választ elrejt)
-    // BE: hidden0, hidden1 - kimenő paraméterek, ide kerülnek az elrejtett indexek
-    void apply5050(int& hidden0, int& hidden1) const;
-
-    // CÉL: Közönség segítség (pseudo-random szavazateloszlás)
-    // BE: audience - 4 elemű tömb, ide írjuk a százalékokat
-    void applyAudience(int audience[4]) const;
 
 public:
     /*
@@ -147,9 +111,6 @@ public:
     // CÉL: Feleletválasztós válasz ellenőrzése
     bool checkAnswer(const std::string& input) const override;
 
-    // CÉL: Feleletválasztós kérdezés (50:50, közönség, A-D)
-    AskResult ask(int currentLevel, bool& used5050, bool& usedAudience) override;
-
     // CÉL: Nehézségi szint lekérése
     int getDifficulty() const;
 };
@@ -159,11 +120,6 @@ public:
 
 // CÉL: Sorrendezős kérdés, ahol 4 elemet kell helyes sorrendbe rakni
 class OrderQuestion : public Question {
-private:
-    // CÉL: Sorrendezős válasz validitás ellenőrzése
-    // KI: csak akkor true, ha pontosan 4 betű és csak A, B, C, D ismétlés nélkül
-    static bool isValidOrderInput(const std::string& input);
-
 public:
     /*
         CÉL: Sorrendezős kérdés létrehozása
@@ -184,14 +140,6 @@ public:
 
     // CÉL: Sorrendezős válasz ellenőrzése
     bool checkAnswer(const std::string& input) const override;
-
-    /*
-        CÉL: Sorrendezős kérdezés (4 betűs input)
-        MEGJEGYZÉS:
-            used5050 és usedAudience itt nem használt, mert sorrendezősnél
-            nincs segítség. De az ősosztály signaturája miatt kell.
-    */
-    AskResult ask(int currentLevel, bool& used5050, bool& usedAudience) override;
 };
 
 #endif

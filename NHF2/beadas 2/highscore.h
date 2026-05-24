@@ -84,22 +84,14 @@ public:
     */
     void add(const std::string& name, int prize);
 
+    // CÉL: A dicsőséglista elemeinek száma getter
+    std::size_t HighScoreTable::size() const {}
+
     // CÉL: Dicsőséglista törlése memóriából és fájlból
     void reset();
 
     // CÉL: Dicsőséglista rendezett kiírása a konzolra
     void display() const;
-
-    // CÉL: Bejegyzések száma (teszteléshez kell, hogy ne csak SUCCEED-eljünk)
-    std::size_t size() const;
-
-    /*
-        CÉL: Adott indexű bejegyzés lekérése (teszteléshez kell)
-        MEGJEGYZÉS:
-            Az index NEM a rendezett sorrend, hanem a betöltési sorrend!
-            Ha a beszúrt rekord adatait akarjuk csekkolni, az utolsót nézzük.
-    */
-    const HighScoreEntry& at(std::size_t index) const;
 };
 
 #endif
