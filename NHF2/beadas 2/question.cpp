@@ -22,13 +22,18 @@
 #include "memtrace.h" // memóriaszivárgás check
 
 #include "question.h"
+#include "gamestate.h" // GameState struct
 #include "colors.h"
 
+#include "utils.h"
+
 #include <iostream> // konzol kiírás
+#include <algorithm> // shuffle
 
 using std::string;
 using std::vector;
 using std::cout;
+using std::cin;
 
 //! ---------- ALAP OSZTÁLY ----------
 
@@ -67,7 +72,6 @@ const string& Question::getCorrectAnswer() const {
 const vector<string>& Question::getAnswers() const {
     return answers;
 }
-
 
 //! ---------- FELELETVÁLASZTÓS KÉRDÉS ----------
 
@@ -150,6 +154,192 @@ void ChooseQuestion::displayWithHints(
     }
 }
 
+void ChooseQuestion::apply5050(GameState& s) const {    
+    s.used5050 = true; // A segítséget most használta el
+
+    // Lekérjük a helyes választ
+    string correct = getCorrectAnswer();
+
+    // guardrail: ha üres
+    if (correct.empty()) {
+        return;
+    }
+
+    int correctIdx = toupper(correct[0]) - 'A';
+
+    // Ide gyűjtjük a rossz válaszok indexeit
+    vector<int> wrongIndexes;
+
+    for (int i = 0; i < 4; i++) {
+        if (i != correctIdx) {
+            wrongIndexes.push_back(i);
+        }
+    }
+
+    // Összekeverjük a rossz válaszokat
+    std::shuffle(wrongIndexes.begin(), wrongIndexes.end(), rng());
+
+    // Az első két rossz választ elrejtjük
+    s.hiddenResponses[0] = wrongIndexes[0];
+    s.hiddenResponses[1] = wrongIndexes[1];
+
+}
+
+void ChooseQuestion::applyAudience(GameState& s) const {
+    // A segítséget most használta el
+    s.usedAudience = true;
+
+    // Lekérjük a helyes választ
+    string correct = getCorrectAnswer();
+
+    // guardrail: ha üres
+    if (correct.empty()) {
+        return;
+    }
+
+    int correctIdx = toupper(correct[0]) - 'A';
+
+    // Minden százalékot lenullázunk
+    for (int i = 0; i < 4; i++) {
+        s.audienceValues[i] = 0;
+    }
+
+    // A helyes válasz kapjon 30 és 60 közötti százalékot
+    s.audienceValues[correctIdx] = randomInt(30, 60);
+
+    // Ennyi maradt a rossz válaszokra
+    int remaining = 100 - s.audienceValues[correctIdx];
+
+    vector<int> wrongIndexes;
+
+    for (int i = 0; i < 4; i++) {
+        if (i != correctIdx) {
+            wrongIndexes.push_back(i);
+        }
+    }
+
+    // Összekeverjük a rossz válaszokat
+    // Mivel az elsőnek van esélye a legtöbbet kapni, az utolsónak a legkevesebbet
+    std::shuffle(wrongIndexes.begin(), wrongIndexes.end(), rng());
+
+    //? 1.
+    int first = randomInt(0, remaining);
+    remaining -= first;
+
+    //? 2.
+    int second = randomInt(0, remaining);
+    remaining -= second;
+
+    //? 3.
+    int third = remaining;
+
+    s.audienceValues[wrongIndexes[0]] = first;
+    s.audienceValues[wrongIndexes[1]] = second;
+    s.audienceValues[wrongIndexes[2]] = third;
+}
+
+
+void ChooseQuestion::ask(GameState& s) const {
+    s.hiddenResponses[0] = -1;
+    s.hiddenResponses[1] = -1;
+    bool audienceThisQuestion = false; // ne mutasson százalékot a következő kérdésnél
+
+    while (!s.gameOver) {
+        clearScreen();
+        printLevelHeader(s.currentLevel);
+
+        // Kérdés kiírása, esetleges 50:50 elrejtésekkel, közönség százalékokkal
+        displayWithHints(
+            s.hiddenResponses[0],
+            s.hiddenResponses[1],
+            audienceThisQuestion ? s.audienceValues : nullptr
+        );
+
+        printSeparator();
+
+        cout << "\nLehetőségek:\n";
+        cout << "   A / B / C / D\n";
+
+        if (!s.used5050) {
+            cout << "   F - 50:50\n";
+        } else {
+            cout << "   " << Color::GREY_STRIKE << "F - 50:50" << Color::RESET << "\n";
+        }
+        if (!s.usedAudience) {
+            cout << "   K - Közönség\n";
+        } else {
+            cout << "   " << Color::GREY_STRIKE << "K - Közönség" << Color::RESET << "\n";
+        }
+        cout << "   Q - Megállás\n";
+        cout << "\nVálasz: ";
+
+        string input;
+        getline(cin, input);
+
+        if (input.empty()) continue;
+        normalizeInput(input);
+
+        //? FELADÁS
+        if (input == "Q") {
+            s.walkAway = true;
+            s.gameOver = true;
+            return;
+        }
+
+        //? 50:50 SEGÍTSÉG
+        if (input == "F") {
+            if (s.used5050) {
+                cout << "Az 50:50 már fel lett használva.\n\n";
+            } else {
+                apply5050(s);
+            }
+            continue;
+        }
+
+        //? KÖZÖNSÉG SEGÍTSÉG
+        if (input == "K") {
+            if (s.usedAudience) {
+                cout << "A közönségsegítség már fel lett használva.\n\n";
+            } else {
+                applyAudience(s);
+                audienceThisQuestion = true;
+            }
+            continue;
+        }
+
+        //? ÉRVÉNYTELEN CHECK
+        if (input.size() != 1 || input[0] < 'A' || input[0] > 'D') {
+            cout << "Érvénytelen válasz, próbáld újra.\n\n";
+            continue;
+        }
+
+        int selectedIndex = input[0] - 'A'; //ASCII miatt, nagyon clean
+
+        //? 50:50 ELREJTÉS CHECK
+        if (isHiddenBy5050(selectedIndex, s.hiddenResponses[0], s.hiddenResponses[1])) {
+            cout << "Ez az opció már el van rejtve az 50:50 miatt.\n\n";
+            continue;
+        }
+
+        //? HELYESSÉG CHECK
+        if (checkAnswer(input)) {
+            cout << Color::BOLD_GREEN << "\nHelyes válasz!\n\n" << Color::RESET;
+            waitEnter();
+            return;
+        }
+
+        //! KÜLÖNBEN HELYTELEN
+        cout << Color::BOLD_RED << "\nRossz válasz." << Color::RESET
+             << " A helyes válasz: " << Color::BOLD_YELLOW << getCorrectAnswer()
+             << Color::RESET << "\n";
+             waitEnter();
+
+        s.gameOver = true;
+        s.finalPrize = getSafePrize(s.currentLevel - 1); // -1 mert ugye elbukta a szintet
+        return;
+    }
+}
+
 // CÉL: Feleletválasztós válasz ellenőrzése
 bool ChooseQuestion::checkAnswer(const string& input) const {
     return input == correctAnswer;
@@ -201,6 +391,57 @@ void OrderQuestion::display() const {
         }
     }
 }
+
+void OrderQuestion::ask(GameState& s) const {
+    while (!s.gameOver) {
+        clearScreen();
+        printLevelHeader(s.currentLevel);
+
+        display();
+        printSeparator();
+
+        cout << "\nAdd meg a sorrendet 4 betűvel (pld: ABDC)\n";
+        cout << "   Q - Megállás\n";
+        cout << "\nVálasz: ";
+
+        // Ugyanolyan input kezelés mint a feleletválasztósnál
+        string input;
+        getline(cin, input);
+        if (input.empty()) continue;
+        normalizeInput(input);
+
+        //? FELADÁS
+        if (input == "Q") {
+            s.walkAway = true;
+            s.gameOver = true;
+            return;
+        }
+
+        //? ÉRVÉNYTELEN CHECK
+        if (!isValidOrderInput(input)) {
+            cout << "A válasz csak A, B, C, D betűket tartalmazhat, ismétlés nélkül.\n\n";
+            continue;
+        }
+
+        //? HELYESSÉG CHECK
+        if (checkAnswer(input)) {
+            cout << Color::BOLD_GREEN << "\nHelyes válasz!\n\n" << Color::RESET;
+            waitEnter();
+            return;
+        }
+
+        //! KÜLÖNBEN HELYTELEN
+        cout << Color::BOLD_RED << "\nRossz válasz." << Color::RESET
+             << " A helyes sorrend: " << Color::BOLD_YELLOW << getCorrectAnswer()
+             << Color::RESET << "\n";
+             waitEnter();
+
+        s.gameOver   = true;
+        s.finalPrize = getSafePrize(s.currentLevel - 1);
+        return;
+    }
+}
+
 
 // CÉL: Sorrendezős válasz ellenőrzése
 bool OrderQuestion::checkAnswer(const string& input) const {

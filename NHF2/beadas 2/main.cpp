@@ -7,7 +7,7 @@
      - Főmenü (loop) indítása
 
     //! Fordítási parancs:
-    //! g++ -std=c++11 -Wall -Wextra -o loim main.cpp game.cpp highscore.cpp question.cpp filemanager.cpp test.cpp memtrace.cpp
+    //! g++ -std=c++11 -Wall -Wextra -DMEMTRACE -o loim main.cpp game.cpp highscore.cpp question.cpp filemanager.cpp test.cpp memtrace.cpp utils.cpp
 ======================================================================*/
 
 #include "memtrace.h" // memóriaszivárgás check

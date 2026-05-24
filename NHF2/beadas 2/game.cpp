@@ -17,6 +17,9 @@
 #include "game.h"
 #include "filemanager.h"
 #include "colors.h"
+#include "question.h"
+
+#include "utils.h" // Amit írtál, hogy legyen egy Utils (file)
 
 #include <algorithm> // shuffle
 #include <cctype>    // toupper
@@ -31,39 +34,6 @@ using std::endl;
 using std::cin;
 
 
-namespace {
-
-// CÉL: Egy központi random generátor
-std::mt19937& rng() {
-
-    // random_device -> random seed
-    // static miatt nem kell ujraindítani minden rng()-nél
-    static std::mt19937 generator(std::random_device{}()); // https://stackoverflow.com/questions/39288595/why-not-just-use-stdrandom-device
-
-    // Referenciát adunk vissza, hogy mindig ugyanazt a generátort használjuk
-    // NE generáljunk mindig új seedet
-    return generator;
-}
-
-// CÉL: Uj játéknál új random seed generálása
-void reseedRng() {
-    // de menő hogy std::mt19937-nek van .seed metódusa :D
-    rng().seed(std::random_device{}());
-}
-
-
-// CÉL: Random int generálása két érték között
-int randomInt(int min, int max) {
-
-    // Mindkét határ benne van, tehát pld: randomInt(0, 3) -> 0, 1, 2 vagy 3
-    std::uniform_int_distribution<int> distribution(min, max);
-    // Seed-et használó C++ kód minta: 
-    // https://en.cppreference.com/cpp/numeric/random/uniform_int_distribution
-
-    // Az előbbi random generátorral kérünk egy számot ebből az eloszlásból
-    return distribution(rng());
-}
-
 enum QuestionType {
     ChooseQuestionType,
     OrderQuestionType
@@ -73,34 +43,19 @@ enum QuestionType {
 
 void printMainMenuScreen() {
 
-    Game::clearScreen();
-    Game::printSeparator();
+    clearScreen();
+    printSeparator();
     cout << Color::BOLD_YELLOW << "                   LEGYEN ÖN IS MILLIOMOS!\n" << Color::RESET;
-    Game::printSeparator();
+    printSeparator();
     cout << "\n";
     cout << "  " << Color::BOLD_YELLOW << "[1]" << Color::RESET << " ÚJ JÁTÉK\n";
     cout << "  " << Color::BOLD_YELLOW << "[2]" << Color::RESET << " DICSŐSÉGLISTA\n";
     cout << "  " << Color::BOLD_YELLOW << "[3]" << Color::RESET << " KILÉPÉS\n";
     cout << "\n";
-    Game::printSeparator();
+    printSeparator();
 }
 
-// CÉL: Egész szám olvasása, nem szám bemenet esetén -1-et ad vissza
-int readInt() {
-    int value;
 
-    // Buffer ürítések miatt ilyen komplikált
-    if (cin >> value) {
-        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Ez egy buffer ami kiignorál minden maradék inputot
-        // https://stackoverflow.com/questions/25020129/cin-ignorenumeric-limitsstreamsizemax-n
-
-        return value;
-    }
-
-    cin.clear(); // cin hibás állapotának clear-elése
-    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ugyanúgy ignorálás
-    return -1;
-}
 
 // CÉL: Főmenü választás olvasása (1-3), érvénytelen bemenetnél hibaüzenet + újrakérdezés
 int readMenuChoice() {
@@ -114,54 +69,6 @@ int readMenuChoice() {
     }
 }
 
-// CÉL: Játékmód választás olvasása (1-4), érvénytelen bemenetnél hibaüzenet + újrakérdezés
-int selectGameMode() {
-
-    cout << "\nJátékmódok:\n";
-    cout << "  " << Color::BOLD_YELLOW << "[1]" << Color::RESET << " Feleletválasztós\n";
-    cout << "  " << Color::BOLD_YELLOW << "[2]" << Color::RESET << " Sorrendezős\n";
-    cout << "  " << Color::BOLD_YELLOW << "[3]" << Color::RESET << " Vegyes\n";
-    cout << "  " << Color::BOLD_YELLOW << "[4]" << Color::RESET << " Vissza\n";
-
-    while (true) {
-        cout << "Mód: ";
-        int v = readInt();
-
-        if (v >= 1 && v <= 4) return v;
-        
-        cout << Color::BOLD_RED << "Érvénytelen bemenet!\n" << Color::RESET;
-    }
-}
-
-// CÉL: Minden input-ot nagybetűsítünk
-void normalizeInput(string& input) {
-    for (size_t i = 0; i < input.size(); i++) { 
-        input[i] = toupper(input[i]); // Végigmegyünk a bemeneten és toupper minden karakterre
-    }
-}
-
-// CÉL: Sorrendezős válasz validitás ellenőrzése
-bool isValidOrderInput(const string& input) {
-    if (input.size() != 4) {
-        return false;
-    }
-
-    for (int i = 0; i < 4; i++) {
-        // Csak A, B, C, D lehet
-        if (input[i] < 'A' || input[i] > 'D') { // ASCII szám alapján
-            return false;
-        }
-
-        // Megnézzük, hogy volt-e már ugyanilyen betű korábban
-        for (int j = 0; j < i; j++) {
-            if (input[i] == input[j]) {
-                return false;
-            }
-        }
-    }
-
-    return true;
-}
 
 // CÉL: Összekeveri a kérdések sorrendjét
 vector<int> buildShuffledOrderIndexes(int count) {
@@ -178,23 +85,6 @@ vector<int> buildShuffledOrderIndexes(int count) {
     return indexes;
 }
 
-// CÉL: Szint fejlécének kiírása
-void printLevelHeader(int level) {
-    int questionNumber = level + 1;
-    int prize = Game::PRIZE_LADDER[level];
-
-    Game::printSeparator();
-
-    cout << "  "
-         << Color::BOLD_YELLOW << questionNumber << ". KÉRDÉS"
-         << Color::RESET;
-
-    cout << "  |  Tét: "
-         << Color::BOLD_GREEN << Game::formatPrize(prize) << " Ft"
-         << Color::RESET << "\n";
-
-    Game::printSeparator();
-}
 
 // CÉL: Eldönti, hogy milyen típusú kérdés következzen
 QuestionType pickQuestionType(int mode, bool hasChoose, bool hasOrder, int level) {
@@ -217,11 +107,11 @@ void printGameResult(
     const string& playerName,   // Játékos neve
     int finalPrize) {           // Végső nyeremény (Nem itt számoljuk ki)
 
-    string prize = Game::formatPrize(finalPrize) + " Ft";
+    string prize = formatPrize(finalPrize) + " Ft";
 
     if (walkAway) {
         cout << "\nMegálltál. Nyereményed: ";
-    } else if (!gameOver && currentLevel >= Game::LEVELS) {
+    } else if (!gameOver && currentLevel >= LEVELS) {
         cout << "\n" << Color::BOLD_YELLOW
              << "Gratulálok, " << playerName << "!\n"
              << Color::RESET;
@@ -234,40 +124,24 @@ void printGameResult(
     cout << Color::BOLD_GREEN << prize << Color::RESET << "\n";
 }
 
-// Visszaadja hogy a játékos nem elrejtett választ választott
-bool isHiddenBy5050(int selectedIndex, int hidden0, int hidden1) {
-    return selectedIndex == hidden0 || selectedIndex == hidden1;
-}
 
-} // NAMESPACE
-  // Mivel így csak itt láthatók, ugyanis ezek csak segédfüggvények
-
-//! ---------- KONSTANSOK ----------
-
-const int Game::PRIZE_LADDER[Game::LEVELS] = {
-    5000, 10000, 25000, 50000, 100000, 200000,
-    300000, 500000, 800000, 1500000, 3000000, 5000000
-};
 
 //! ---------- KONSTRUKTOR ----------
 
-Game::Game():
-    hasChoose(false),   // Létezik feleletválasztós kérdés?
-    hasOrder(false),    // Létezik sorrendezős kérdés?
-    currentLevel(0),    // Aktuális szint
-    finalPrize(0),      // Végső nyeremény
-    gameOver(false),    // Veszített?
-    walkAway(false),    // Feladta?
-    used5050(false),    // Használta az 50:50 segítséget?
-    usedAudience(false) // Használta a közönség segítséget?
-{
+Game::Game() {
+    hasChoose = false; // Létezik feleletválasztós kérdés?
+    hasOrder  = false; // Létezik sorrendezős kérdés?
+    state.walkAway = false;
+    state.gameOver = false;
+    state.used5050 = false;
+    state.usedAudience = false;
+    state.currentLevel = 0;
+    state.finalPrize = 0;
+    state.hiddenResponses[0] = state.hiddenResponses[1] = -1;
+    state.audienceValues[0] = state.audienceValues[1] = state.audienceValues[2] = state.audienceValues[3] = 0;
+
     rng(); // Random seed generálása
-    hiddenResponses[0] = -1;
-    hiddenResponses[1] = -1;
-    audienceValues[0]  = 0;
-    audienceValues[1]  = 0;
-    audienceValues[2]  = 0;
-    audienceValues[3]  = 0;
+
 }
 
 //! ---------- KÉRDÉSEK BETÖLTÉSE ----------
@@ -403,14 +277,14 @@ void Game::play(int mode) {
     std::size_t nextOrderQuestion = 0;
 
     // Végigmegyünk a szinteken
-    for (currentLevel = 0; currentLevel < LEVELS && !gameOver; ++currentLevel) {
+    for (state.currentLevel = 0; state.currentLevel < LEVELS && !state.gameOver; ++state.currentLevel) {
         
         // Függvény hivása, ami eldönti hogy milyen kérdés típus legyen
         QuestionType questionType = pickQuestionType(
             mode,
             hasChoose,
             hasOrder,
-            currentLevel
+            state.currentLevel
         );
 
         switch (questionType) {
@@ -420,23 +294,23 @@ void Game::play(int mode) {
                 
                 // Egyik leghosszabb változónév amit valaha adtam
                 // Megadja hogy van-e választós kérdés egy adott szinten
-                bool noChooseQuestionOnThisLevel = chooseQuestions[currentLevel].empty();
+                bool noChooseQuestionOnThisLevel = chooseQuestions[state.currentLevel].empty();
 
                 if (noChooseQuestionOnThisLevel) {
                     cout << "Nincs elég feleletválasztós kérdés ezen a szinten, a játék leáll.\n";
 
-                    gameOver = true;
-                    finalPrize = getSafePrize(currentLevel - 1);
+                    state.gameOver = true;
+                    state.finalPrize = getSafePrize(state.currentLevel - 1);
                     break;
                 }
 
                 // size_t -> int , ebből random indexet generálunk
-                int questionCount = static_cast<int>(chooseQuestions[currentLevel].size());
+                int questionCount = static_cast<int>(chooseQuestions[state.currentLevel].size());
                 int randomIndex = randomInt(0, questionCount - 1);
 
-                ChooseQuestion& question = chooseQuestions[currentLevel][randomIndex];
+                ChooseQuestion& question = chooseQuestions[state.currentLevel][randomIndex];
 
-                askChooseQuestion(question);
+                question.ask(state);
                 break;
             }
 
@@ -449,8 +323,8 @@ void Game::play(int mode) {
                 if (noOrderQuestions) {
                     cout << "Nincs sorrendezős kérdés, a játék leáll.\n";
 
-                    gameOver = true;
-                    finalPrize = getSafePrize(currentLevel - 1);
+                    state.gameOver = true;
+                    state.finalPrize = getSafePrize(state.currentLevel - 1);
                     break;
                 }
 
@@ -465,15 +339,15 @@ void Game::play(int mode) {
 
                 OrderQuestion& question = orderQuestions[questionIndex];
 
-                askOrderQuestion(question);
+                question.ask(state);
                 break;
             }
         }
 
         // Ha a kérdés után még nem lett vége a játéknak,
         // akkor a játékos elérte az aktuális szint nyereményét
-        if (!gameOver) {
-            finalPrize = PRIZE_LADDER[currentLevel];
+        if (!state.gameOver) {
+            state.finalPrize = PRIZE_LADDER[state.currentLevel];
         }
     }
 
@@ -481,267 +355,30 @@ void Game::play(int mode) {
     clearScreen();
 
     printGameResult(
-        walkAway,
-        gameOver,
-        currentLevel,
+        state.walkAway,
+        state.gameOver,
+        state.currentLevel,
         playerName,
-        finalPrize
+        state.finalPrize
     );
 
-    hsTable.add(playerName, finalPrize); // Dátumot ott számolunk
+    hsTable.add(playerName, state.finalPrize); // Dátumot ott számolunk
 
     waitEnter();
 }
 
-void Game::askChooseQuestion(ChooseQuestion& q) {
-    hiddenResponses[0] = -1;
-    hiddenResponses[1] = -1;
-    bool audienceThisQuestion = false; // ne mutasson százalékot a következő kérdésnél
-
-    while (!gameOver) {
-        clearScreen();
-        printLevelHeader(currentLevel);
-
-        // Kérdés kiírása, esetleges 50:50 elrejtésekkel, közönség százalékokkal
-        q.displayWithHints(
-            hiddenResponses[0],
-            hiddenResponses[1],
-            audienceThisQuestion ? audienceValues : nullptr
-        );
-
-        printSeparator();
-
-        cout << "\nLehetőségek:\n";
-        cout << "   A / B / C / D\n";
-
-        if (!used5050) {
-            cout << "   F - 50:50\n";
-        } else {
-            cout << "   " << Color::GREY_STRIKE << "F - 50:50" << Color::RESET << "\n";
-        }
-        if (!usedAudience) {
-            cout << "   K - Közönség\n";
-        } else {
-            cout << "   " << Color::GREY_STRIKE << "K - Közönség" << Color::RESET << "\n";
-        }
-        cout << "   Q - Megállás\n";
-        cout << "\nVálasz: ";
-
-        string input;
-        getline(cin, input);
-
-        if (input.empty()) continue;
-        normalizeInput(input);
-
-        //? FELADÁS
-        if (input == "Q") {
-            walkAway = true;
-            gameOver = true;
-            return;
-        }
-
-        //? 50:50 SEGÍTSÉG
-        if (input == "F") {
-            if (used5050) {
-                cout << "Az 50:50 már fel lett használva.\n\n";
-            } else {
-                apply5050(q);
-            }
-            continue;
-        }
-
-        //? KÖZÖNSÉG SEGÍTSÉG
-        if (input == "K") {
-            if (usedAudience) {
-                cout << "A közönségsegítség már fel lett használva.\n\n";
-            } else {
-                applyAudience(q);
-                audienceThisQuestion = true;
-            }
-            continue;
-        }
-
-        //? ÉRVÉNYTELEN CHECK
-        if (input.size() != 1 || input[0] < 'A' || input[0] > 'D') {
-            cout << "Érvénytelen válasz, próbáld újra.\n\n";
-            continue;
-        }
-
-        int selectedIndex = input[0] - 'A'; //ASCII miatt, nagyon clean
-
-        //? 50:50 ELREJTÉS CHECK
-        if (isHiddenBy5050(selectedIndex, hiddenResponses[0], hiddenResponses[1])) {
-            cout << "Ez az opció már el van rejtve az 50:50 miatt.\n\n";
-            continue;
-        }
-
-        //? HELYESSÉG CHECK
-        if (q.checkAnswer(input)) {
-            cout << Color::BOLD_GREEN << "\nHelyes válasz!\n\n" << Color::RESET;
-            waitEnter();
-            return;
-        }
-
-        //! KÜLÖNBEN HELYTELEN
-        cout << Color::BOLD_RED << "\nRossz válasz." << Color::RESET
-             << " A helyes válasz: " << Color::BOLD_YELLOW << q.getCorrectAnswer()
-             << Color::RESET << "\n";
-             waitEnter();
-
-        gameOver = true;
-        finalPrize = getSafePrize(currentLevel - 1); // -1 mert ugye elbukta a szintet
-        return;
-    }
-}
-
-void Game::askOrderQuestion(OrderQuestion& q) {
-    while (!gameOver) {
-        clearScreen();
-        printLevelHeader(currentLevel);
-
-        q.display();
-        printSeparator();
-
-        cout << "\nAdd meg a sorrendet 4 betűvel (pld: ABDC)\n";
-        cout << "   Q - Megállás\n";
-        cout << "\nVálasz: ";
-
-        // Ugyanolyan input kezelés mint a feleletválasztósnál
-        string input;
-        getline(cin, input);
-        if (input.empty()) continue;
-        normalizeInput(input);
-
-        //? FELADÁS
-        if (input == "Q") {
-            walkAway = true;
-            gameOver = true;
-            return;
-        }
-
-        //? ÉRVÉNYTELEN CHECK
-        if (!isValidOrderInput(input)) {
-            cout << "A válasz csak A, B, C, D betűket tartalmazhat, ismétlés nélkül.\n\n";
-            continue;
-        }
-
-        //? HELYESSÉG CHECK
-        if (q.checkAnswer(input)) {
-            cout << Color::BOLD_GREEN << "\nHelyes válasz!\n\n" << Color::RESET;
-            waitEnter();
-            return;
-        }
-
-        //! KÜLÖNBEN HELYTELEN
-        cout << Color::BOLD_RED << "\nRossz válasz." << Color::RESET
-             << " A helyes sorrend: " << Color::BOLD_YELLOW << q.getCorrectAnswer()
-             << Color::RESET << "\n";
-             waitEnter();
-
-        gameOver   = true;
-        finalPrize = getSafePrize(currentLevel - 1);
-        return;
-    }
-}
-
-//! ---------- SEGÍTSÉGEK ----------
-
-
-void Game::apply5050(ChooseQuestion& q) {
-    // A segítséget most használta el
-    used5050 = true;
-
-    // Lekérjük a helyes választ
-    string correct = q.getCorrectAnswer();
-
-    // guardrail: ha üres
-    if (correct.empty()) {
-        return;
-    }
-
-    int correctIdx = toupper(correct[0]) - 'A';
-
-    // Ide gyűjtjük a rossz válaszok indexeit
-    vector<int> wrongIndexes;
-
-    for (int i = 0; i < 4; i++) {
-        if (i != correctIdx) {
-            wrongIndexes.push_back(i);
-        }
-    }
-
-    // Összekeverjük a rossz válaszokat
-    std::shuffle(wrongIndexes.begin(), wrongIndexes.end(), rng());
-
-    // Az első két rossz választ elrejtjük
-    hiddenResponses[0] = wrongIndexes[0];
-    hiddenResponses[1] = wrongIndexes[1];
-}
-
-void Game::applyAudience(ChooseQuestion& q) {
-    // A segítséget most használta el
-    usedAudience = true;
-
-    // Lekérjük a helyes választ
-    string correct = q.getCorrectAnswer();
-
-    // guardrail: ha üres
-    if (correct.empty()) {
-        return;
-    }
-
-    int correctIdx = toupper(correct[0]) - 'A';
-
-    // Minden százalékot lenullázunk
-    for (int i = 0; i < 4; i++) {
-        audienceValues[i] = 0;
-    }
-
-    // A helyes válasz kapjon 30 és 60 közötti százalékot
-    audienceValues[correctIdx] = randomInt(30, 60);
-
-    // Ennyi maradt a rossz válaszokra
-    int remaining = 100 - audienceValues[correctIdx];
-
-    vector<int> wrongIndexes;
-
-    for (int i = 0; i < 4; i++) {
-        if (i != correctIdx) {
-            wrongIndexes.push_back(i);
-        }
-    }
-
-    // Összekeverjük a rossz válaszokat
-    // Mivel az elsőnek van esélye a legtöbbet kapni, az utolsónak a legkevesebbet
-    std::shuffle(wrongIndexes.begin(), wrongIndexes.end(), rng());
-
-    //? 1.
-    int first = randomInt(0, remaining);
-    remaining -= first;
-
-    //? 2.
-    int second = randomInt(0, remaining);
-    remaining -= second;
-
-    //? 3.
-    int third = remaining;
-
-    audienceValues[wrongIndexes[0]] = first;
-    audienceValues[wrongIndexes[1]] = second;
-    audienceValues[wrongIndexes[2]] = third;
-}
 //! ---------- JÁTÉKÁLLAPOT ----------
 
 void Game::resetGameState() {
-    currentLevel       = 0;
-    finalPrize         = 0;
-    gameOver           = false;
-    walkAway           = false;
-    used5050           = false;
-    usedAudience       = false;
-    hiddenResponses[0] = -1;
-    hiddenResponses[1] = -1;
-    audienceValues[0]  = audienceValues[1] = audienceValues[2] = audienceValues[3] = 0;
+    state.currentLevel       = 0;
+    state.finalPrize         = 0;
+    state.gameOver           = false;
+    state.walkAway           = false;
+    state.used5050           = false;
+    state.usedAudience       = false;
+    state.hiddenResponses[0] = -1;
+    state.hiddenResponses[1] = -1;
+    state.audienceValues[0]  = state.audienceValues[1] = state.audienceValues[2] = state.audienceValues[3] = 0;
 }
 
 string Game::getPlayerName() {
@@ -775,57 +412,4 @@ string Game::getPlayerName() {
 
         return name;
     }
-}
-
-//! ---------- STATIKUS SEGÉDESZKÖZÖK ----------
-
-// CÉL: A nyereményt szebben írja ki
-// Példa: 1500000 -> 1.500.000
-string Game::formatPrize(int prize) {
-    string number = std::to_string(prize);
-    string formatted;
-    
-    int size = static_cast<int>(number.size());
-    int count = 0;
-    
-    // Hátulról, előre 3-asával egy "." beszúrása
-    for (int i = size - 1; i >= 0; --i) {
-
-        formatted.insert(formatted.begin(), number[i]); // Elejére szúr, de mi hátulról megyünk végig
-        ++count;
-
-        if (count == 3 && i != 0) {
-            formatted.insert(formatted.begin(), '.');
-            count = 0;
-        }
-    }
-    return formatted;
-}
-
-// Biztonságos szintek: 5. és a 10. szint
-bool Game::isSafeLevel(int index) {
-    return index == 4 || index == 9;
-}
-
-// Ha a játékos veszít, akkor a legutóbbi safe level nyereményét kapja meg
-int Game::getSafePrize(int index) {
-    if (index >= 9) return PRIZE_LADDER[9];
-    if (index >= 4) return PRIZE_LADDER[4];
-    return 0;
-}
-
-void Game::printSeparator() {
-    cout << "────────────────────────────────────────────────────────────────\n";
-}
-
-// Addig vár, amíg a játékos Entert nem nyom
-void Game::waitEnter() {
-    cout << "\n[Nyomj Entert a folytatáshoz...]";
-
-    string temp;
-    getline(cin, temp); // Beolvasunk valamit amit nem használunk, de addigis vár a program
-}
-
-void Game::clearScreen() {
-    cout << "\033[2J\033[H"; // https://stackoverflow.com/questions/35813318/how-to-refresh-terminal-page-in-c
 }

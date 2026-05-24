@@ -25,6 +25,8 @@
 #include <string>
 #include <vector>
 
+#include "gamestate.h" // GameState struct
+
 //! ---------- ALAP OSZTÁLY ----------
 
 // CÉL: Közös absztrakt alap minden kérdéstípushoz, NEM PÉLDÁNYOSÍTJUK
@@ -67,6 +69,8 @@ public:
 
     // CÉL: Válaszlehetőségek lekérése
     const std::vector<std::string>& getAnswers() const;
+
+    virtual void ask(GameState& s) const = 0;
 };
 
 
@@ -113,6 +117,13 @@ public:
 
     // CÉL: Nehézségi szint lekérése
     int getDifficulty() const;
+
+    void apply5050(GameState& s) const;
+
+    void applyAudience(GameState& s) const;
+
+    void ask(GameState& s) const override;
+
 };
 
 
@@ -140,6 +151,8 @@ public:
 
     // CÉL: Sorrendezős válasz ellenőrzése
     bool checkAnswer(const std::string& input) const override;
+
+    void ask(GameState& s) const override;
 };
 
 #endif

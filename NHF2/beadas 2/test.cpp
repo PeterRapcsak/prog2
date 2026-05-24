@@ -11,11 +11,11 @@
 #include "gtest_lite.h" //gtest_lite használata a tesztekhez
 
 /*
-    EXPECT_EQ    | egyenlőség teszt
-    EXPECT_TRUE  | igaz teszt
-    EXPECT_FALSE | hamis teszt
-    EXPECT_GT    | greater than teszt
-    SUCCEED      | sikeres teszt makro
+    EXPECT_EQ       | egyenlőség teszt
+    EXPECT_TRUE     | igaz teszt
+    EXPECT_FALSE    | hamis teszt
+    EXPECT_GT       | greater than teszt
+    EXPECT_NO_THROW | nem dob kivételt teszt
 */
 
 #include <vector>
@@ -25,6 +25,7 @@
 #include "game.h"
 #include "highscore.h"
 #include "question.h"
+#include "utils.h"
 
 using std::string;
 
@@ -38,27 +39,27 @@ int tesztelek(bool run) {
 
     //! ---------- GAME ----------
 
-    //? Game segédfüggvényei hibás inputokkal
-    TEST(Game, FormatPrize)
-        EXPECT_EQ(string("0"), Game::formatPrize(0));
-        EXPECT_EQ(string("-5.000.000"), Game::formatPrize(-5000000));
-        EXPECT_EQ(string("999"), Game::formatPrize(999));
+    //? Utils segédfüggvényei hibás inputokkal
+    TEST(Utils, FormatPrize)
+        EXPECT_EQ(string("0"), formatPrize(0));
+        EXPECT_EQ(string("-5.000.000"), formatPrize(-5000000));
+        EXPECT_EQ(string("999"), formatPrize(999));
     END
 
-    TEST(Game, IsSafeLevel)
-        EXPECT_FALSE(Game::isSafeLevel(-1));
-        EXPECT_FALSE(Game::isSafeLevel(0));
-        EXPECT_TRUE(Game::isSafeLevel(4));   // 5. szint
-        EXPECT_TRUE(Game::isSafeLevel(9));   // 10. szint
-        EXPECT_FALSE(Game::isSafeLevel(67)); // 10. szint után
+    TEST(Utils, IsSafeLevel)
+        EXPECT_FALSE(isSafeLevel(-1));
+        EXPECT_FALSE(isSafeLevel(0));
+        EXPECT_TRUE(isSafeLevel(4));   // 5. szint
+        EXPECT_TRUE(isSafeLevel(9));   // 10. szint
+        EXPECT_FALSE(isSafeLevel(67)); // 10. szint után
     END
 
-    TEST(Game, GetSafePrize)
-        EXPECT_EQ(0, Game::getSafePrize(-1));
-        EXPECT_EQ(0, Game::getSafePrize(0));
-        EXPECT_EQ(100000, Game::getSafePrize(4));   // 5. szint után
-        EXPECT_EQ(1500000, Game::getSafePrize(9));  // 10. szint után
-        EXPECT_EQ(1500000, Game::getSafePrize(67)); // 10. szint után
+    TEST(Utils, GetSafePrize)
+        EXPECT_EQ(0, getSafePrize(-1));
+        EXPECT_EQ(0, getSafePrize(0));
+        EXPECT_EQ(100000, getSafePrize(4));   // 5. szint után
+        EXPECT_EQ(1500000, getSafePrize(9));  // 10. szint után
+        EXPECT_EQ(1500000, getSafePrize(67)); // 10. szint után
     END
 
 
@@ -135,7 +136,7 @@ int tesztelek(bool run) {
 
 
     //! ---------- DICSŐSÉGLISTA ----------
-    // ITT MÁR NEM CSAK SUCCEED, hanem ténylegesen ellenőrzöm az állapotot
+    // MÁR NEM CSAK SUCCEED
 
     //? Hozzáadás megnöveli a size-t (üres listából indulva)
     TEST(HighScoreTable, AddIncreasesSize)
@@ -145,10 +146,10 @@ int tesztelek(bool run) {
         EXPECT_EQ(0U, t.size()) << "reset után üres legyen";
 
         t.add("Teszt1", 500000);
-        EXPECT_EQ(1U, t.size()) << "1 hozzáadás után 1 elem legyen";
+        EXPECT_EQ(1U, t.size()) << "1 hozzáadás = 1 elem legyen";
 
         t.add("Teszt2", 100000);
-        EXPECT_EQ(2U, t.size()) << "2 hozzáadás után 2 elem legyen";
+        EXPECT_EQ(2U, t.size()) << "2 hozzáadás = 2 elem legyen";
 
         t.reset(); // takarítás magunk után
     END
@@ -166,7 +167,7 @@ int tesztelek(bool run) {
         t.reset();
     END
 
-    //? Negatív nyeremény eltárolódik (nem szűrjük, mert nem cél)
+    //? Negatív nyereményt NEM tárolunk
     TEST(HighScoreTable, AddNegativePrizeStored)
         HighScoreTable t("test.csv");
         t.reset();
@@ -205,30 +206,21 @@ int tesztelek(bool run) {
         EXPECT_EQ(0U, t2.size()) << "fileból betöltve is üres";
     END
 
-    //? Display ne crasheljen üres listán sem
-    // (ez egyedül marad SUCCEED, mert konzol kimenetet nem ellenőrzünk teszttel)
+    //? Display ne crasheljen üres listán semú
+    // EXPECT_NO_THROW jobb mint a sima SUCCEED()
     TEST(HighScoreTable, DisplayDoesNotCrash)
-        HighScoreTable t("test.csv");
-        t.reset();
-        t.display(); // üres lista
-        t.add("xd", 100);
-        t.display(); // 1 elemmel
-        t.reset();
-        SUCCEED() << "display lefutott crash nélkül";
+        EXPECT_NO_THROW({
+            HighScoreTable t("test.csv");
+            t.reset();
+            t.display(); // üres lista
+            t.add("xd", 100);
+            t.display(); // 1 elemmel
+            t.reset();
+        });
     END
-
-    //! ---------- DICSŐSÉGLISTA CHECK ----------
-
-    TEST(HighScoreTable, LoadAndDisplay)
-        HighScoreTable table("test.csv");
-        table.load();
-        table.display();
-        SUCCEED() << "Dicsőséglista betöltve és kiírva";
-    END
-
 
     std::cout << "\nTeszt vége\n";
-    Game::waitEnter(); // el is lehessen olvasni a teszt eredményét
+    waitEnter(); // el is lehessen olvasni a teszt eredményét
 
     return 1;
 }
