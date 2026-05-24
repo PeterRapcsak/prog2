@@ -85,7 +85,7 @@ public:
     void add(const std::string& name, int prize);
 
     // CÉL: A dicsőséglista elemeinek száma getter
-    std::size_t HighScoreTable::size() const {}
+    std::size_t size() const;
 
     // CÉL: Dicsőséglista törlése memóriából és fájlból
     void reset();

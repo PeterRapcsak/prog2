@@ -268,14 +268,6 @@ void HighScoreTable::add(const string& name, int prize) {
     save();
 }
 
-// CÉL: Dicsőséglista törlése memóriából és fájlból
-void HighScoreTable::reset() {
-    entries.clear();
-
-    // Üres lista mentése -> csak a fejléc marad a CSV-ben
-    save();
-}
-
 // CÉL: A dicsőséglista elemeinek száma getter
 std::size_t HighScoreTable::size() const {
     return entries.size();
