@@ -1,4 +1,3 @@
-
 #ifndef UTILS_H
 #define UTILS_H
 
@@ -16,19 +15,27 @@ using std::cin;
 
 //! ---------- KONSTANSOK ----------
 
-static const int LEVELS = 12;          // szintek száma (kérdések száma egy játékban)
+static const int LEVELS = 12; // szintek száma (kérdések száma egy játékban)
 
 extern const int PRIZE_LADDER[LEVELS];
 
 //! ---------- SEGÉDFÜGGVÉNYEK ----------
 
+// CÉL: Egész szám olvasása, nem szám bemenet esetén -1-et ad vissza
+int readInt();
 
 // CÉL: Játékmód választás olvasása (1-4), érvénytelen bemenetnél hibaüzenet + újrakérdezés
 int selectGameMode();
 
+// Addig vár, amíg a játékos Entert nem nyom
+void waitEnter();
 
-// CÉL: Egész szám olvasása, nem szám bemenet esetén -1-et ad vissza
-int readInt();
+void clearScreen();
+
+void printSeparator();
+
+//! ---------- JÁTÉKLOGIKA SEGÉDFÜGGVÉNYEI ----------
+
 /*
     CÉL: Megmondja, hogy az adott szintindex biztos szint-e
     BE: index
@@ -39,12 +46,21 @@ bool isSafeLevel(int index);
 // Ha a játékos veszít, akkor a legutóbbi safe level nyereményét kapja meg
 int getSafePrize(int index);
 
-void printSeparator();
+// CÉL: Szint fejlécének kiírása
+void printLevelHeader(int level);
 
-// Addig vár, amíg a játékos Entert nem nyom
-void waitEnter();
+//! ---------- SZÖVEGKEZELÉS ----------
 
-void clearScreen();
+// CÉL: Minden input-ot nagybetűsítünk
+void normalizeInput(string& input);
+
+// Visszaadja hogy a játékos nem elrejtett választ választott
+bool isHiddenBy5050(int selectedIndex, int hidden0, int hidden1);
+
+// CÉL: Sorrendezős válasz validitás ellenőrzése
+bool isValidOrderInput(const string& input);
+
+//! ---------- FORMÁZÁS ----------
 
 /*
     CÉL: Egész szám ezres tagolással formázva
@@ -52,6 +68,8 @@ void clearScreen();
     KI: Formázott string (pld: "5.000.000")
 */
 string formatPrize(int prize);
+
+//! ---------- RANDOM ----------
 
 // CÉL: Egy központi random generátor
 std::mt19937& rng();
@@ -61,23 +79,5 @@ void reseedRng();
 
 // CÉL: Random int generálása két érték között
 int randomInt(int min, int max);
-
-// CÉL: Szint fejlécének kiírása
-void printLevelHeader(int level);
-
-// CÉL: Minden input-ot nagybetűsítünk
-void normalizeInput(string& input);
-
-
-// Visszaadja hogy a játékos nem elrejtett választ választott
-bool isHiddenBy5050(int selectedIndex, int hidden0, int hidden1);
-
-
-
-// CÉL: Sorrendezős válasz validitás ellenőrzése
-bool isValidOrderInput(const string& input);
-
-
-
 
 #endif

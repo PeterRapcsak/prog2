@@ -1,4 +1,3 @@
-
 #include <iostream> 
 #include <limits>
 #include <random>
@@ -21,6 +20,22 @@ const int PRIZE_LADDER[LEVELS] = {
 
 //! ---------- SEGÉDFÜGGVÉNYEK ----------
 
+// CÉL: Egész szám olvasása, nem szám bemenet esetén -1-et ad vissza
+int readInt() {
+    int value;
+
+    // Buffer ürítések miatt ilyen komplikált
+    if (cin >> value) {
+        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Ez egy buffer ami kiignorál minden maradék inputot
+        // https://stackoverflow.com/questions/25020129/cin-ignorenumeric-limitsstreamsizemax-n
+
+        return value;
+    }
+
+    cin.clear(); // cin hibás állapotának clear-elése
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ugyanúgy ignorálás
+    return -1;
+}
 
 // CÉL: Játékmód választás olvasása (1-4), érvénytelen bemenetnél hibaüzenet + újrakérdezés
 int selectGameMode() {
@@ -41,24 +56,23 @@ int selectGameMode() {
     }
 }
 
+// Addig vár, amíg a játékos Entert nem nyom
+void waitEnter() {
+    cout << "\n[Nyomj Entert a folytatáshoz...]";
 
-// CÉL: Egész szám olvasása, nem szám bemenet esetén -1-et ad vissza
-int readInt() {
-    int value;
-
-    // Buffer ürítések miatt ilyen komplikált
-    if (cin >> value) {
-        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Ez egy buffer ami kiignorál minden maradék inputot
-        // https://stackoverflow.com/questions/25020129/cin-ignorenumeric-limitsstreamsizemax-n
-
-        return value;
-    }
-
-    cin.clear(); // cin hibás állapotának clear-elése
-    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ugyanúgy ignorálás
-    return -1;
+    string temp;
+    getline(cin, temp); // Beolvasunk valamit amit nem használunk, de addigis vár a program
 }
 
+void clearScreen() {
+    cout << "\033[2J\033[H"; // https://stackoverflow.com/questions/35813318/how-to-refresh-terminal-page-in-c
+}
+
+void printSeparator() {
+    cout << "────────────────────────────────────────────────────────────────\n";
+}
+
+//! ---------- JÁTÉKLOGIKA SEGÉDFÜGGVÉNYEI ----------
 
 /*
     CÉL: Megmondja, hogy az adott szintindex biztos szint-e
@@ -76,21 +90,62 @@ int getSafePrize(int index) {
     return 0;
 }
 
-void printSeparator() {
-    cout << "────────────────────────────────────────────────────────────────\n";
+// CÉL: Szint fejlécének kiírása
+void printLevelHeader(int level) {
+    int questionNumber = level + 1;
+    int prize = PRIZE_LADDER[level];
+
+    printSeparator();
+
+    cout << "  "
+         << Color::BOLD_YELLOW << questionNumber << ". KÉRDÉS"
+         << Color::RESET;
+
+    cout << "  |  Tét: "
+         << Color::BOLD_GREEN << formatPrize(prize) << " Ft"
+         << Color::RESET << "\n";
+
+    printSeparator();
 }
 
-// Addig vár, amíg a játékos Entert nem nyom
-void waitEnter() {
-    cout << "\n[Nyomj Entert a folytatáshoz...]";
+//! ---------- SZÖVEGKEZELÉS ----------
 
-    string temp;
-    getline(cin, temp); // Beolvasunk valamit amit nem használunk, de addigis vár a program
+// CÉL: Minden input-ot nagybetűsítünk
+void normalizeInput(string& input) {
+    for (size_t i = 0; i < input.size(); i++) { 
+        input[i] = toupper(input[i]); // Végigmegyünk a bemeneten és toupper minden karakterre
+    }
 }
 
-void clearScreen() {
-    cout << "\033[2J\033[H"; // https://stackoverflow.com/questions/35813318/how-to-refresh-terminal-page-in-c
+// Visszaadja hogy a játékos nem elrejtett választ választott
+bool isHiddenBy5050(int selectedIndex, int hidden0, int hidden1) {
+    return selectedIndex == hidden0 || selectedIndex == hidden1;
 }
+
+// CÉL: Sorrendezős válasz validitás ellenőrzése
+bool isValidOrderInput(const string& input) {
+    if (input.size() != 4) {
+        return false;
+    }
+
+    for (int i = 0; i < 4; i++) {
+        // Csak A, B, C, D lehet
+        if (input[i] < 'A' || input[i] > 'D') { // ASCII szám alapján
+            return false;
+        }
+
+        // Megnézzük, hogy volt-e már ugyanilyen betű korábban
+        for (int j = 0; j < i; j++) {
+            if (input[i] == input[j]) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+//! ---------- FORMÁZÁS ----------
 
 /*
     CÉL: Egész szám ezres tagolással formázva
@@ -118,6 +173,8 @@ string formatPrize(int prize) {
     return formatted;
 }
 
+//! ---------- RANDOM ----------
+
 // CÉL: Egy központi random generátor
 std::mt19937& rng() {
 
@@ -136,7 +193,6 @@ void reseedRng() {
     rng().seed(std::random_device{}());
 }
 
-
 // CÉL: Random int generálása két érték között
 int randomInt(int min, int max) {
 
@@ -147,59 +203,4 @@ int randomInt(int min, int max) {
 
     // Az előbbi random generátorral kérünk egy számot ebből az eloszlásból
     return distribution(rng());
-}
-
-// CÉL: Szint fejlécének kiírása
-void printLevelHeader(int level) {
-    int questionNumber = level + 1;
-    int prize = PRIZE_LADDER[level];
-
-    printSeparator();
-
-    cout << "  "
-         << Color::BOLD_YELLOW << questionNumber << ". KÉRDÉS"
-         << Color::RESET;
-
-    cout << "  |  Tét: "
-         << Color::BOLD_GREEN << formatPrize(prize) << " Ft"
-         << Color::RESET << "\n";
-
-    printSeparator();
-}
-
-// CÉL: Minden input-ot nagybetűsítünk
-void normalizeInput(string& input) {
-    for (size_t i = 0; i < input.size(); i++) { 
-        input[i] = toupper(input[i]); // Végigmegyünk a bemeneten és toupper minden karakterre
-    }
-}
-
-// Visszaadja hogy a játékos nem elrejtett választ választott
-bool isHiddenBy5050(int selectedIndex, int hidden0, int hidden1) {
-    return selectedIndex == hidden0 || selectedIndex == hidden1;
-}
-
-
-
-// CÉL: Sorrendezős válasz validitás ellenőrzése
-bool isValidOrderInput(const string& input) {
-    if (input.size() != 4) {
-        return false;
-    }
-
-    for (int i = 0; i < 4; i++) {
-        // Csak A, B, C, D lehet
-        if (input[i] < 'A' || input[i] > 'D') { // ASCII szám alapján
-            return false;
-        }
-
-        // Megnézzük, hogy volt-e már ugyanilyen betű korábban
-        for (int j = 0; j < i; j++) {
-            if (input[i] == input[j]) {
-                return false;
-            }
-        }
-    }
-
-    return true;
 }
