@@ -104,7 +104,7 @@ public:
 
     // Kiírás streambe
     void kiir(std::ostream& os = std::cout) const {
-        os << "HatIdCsV:" << std::endl;
+        os << "HatIdCsv:" << std::endl; //! KICSI V-VEL
 
         os << "   ";
         CsopVez::kiir(os);
