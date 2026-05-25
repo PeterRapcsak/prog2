@@ -25,19 +25,16 @@
 
 #include "highscore.h"
 #include "colors.h"
+#include "utils.h"
 
 #include <algorithm> // sort
 
 #include <ctime>     // time, localtime, strftime
-#include <iomanip>  // setw, setfill
+#include <iomanip>   // setw, setfill
 
 #include <fstream>   // ifstream, ofstream
 #include <iostream>  // konzol kiírás
 #include <sstream>   // stringstream
-
-// UTF-8 karakterek kezelése 
-#include <codecvt> // codecvt_utf8
-#include <locale>  // wstring_convert
 
 using std::string;
 using std::vector;
@@ -45,59 +42,14 @@ using std::cout;
 
 namespace {
 
-// "Majd kelleni fog" dolgok
-static const string SEP = "────────────────────────────────────────────────────────────────";
-
 //! ---------- SEGÉDFÜGGVÉNYEK ----------
-
-// CÉL: Nyeremény szebb kiírása ezres tagolással
-// Példa: 1500000 -> 1.500.000
-string formatPrize(int prize) {
-    string number = std::to_string(prize);
-    string formatted;
-
-    int count = 0;
-    int size = static_cast<int>(number.size());
-
-    // Hátulról előre haladunk, és közben a formatted végére pakolunk
-    for (int i = size - 1; i >= 0; --i) {
-
-        // Az aktuális számjegyet hozzáadjuk a végéhez
-        formatted += number[i];
-        ++count;
-
-        // Ha megvolt 3 számjegy és még nem értünk a szám elejére, jöhet a pont
-        if (count == 3 && i != 0) {
-            formatted += '.';
-            count = 0;
-        }
-    }
-
-    // Mivel hátulról építettük fel, a végén meg kell fordítani
-    std::reverse(formatted.begin(), formatted.end());
-
-    return formatted;
-}
-
-// CÉL: UTF-8 string látható hosszának kiszámolása
-// MEGJEGYZÉS:
-//      Az ékezetes karakter több byte is lehet.
-std::size_t visibleLength(const string& text) {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-    // https://stackoverflow.com/questions/42739129/where-to-put-stdwstring-convertstdcodecvt-utf8wchar-t
-
-    std::wstring wideText = converter.from_bytes(text);
-    
-    // A wide string size() már karaktereket számol, nem byteokat
-    return wideText.size();
-}
 
 // CÉL: String kiegészítése szóközökkel a kívánt szélességre
 // MEGJEGYZÉS:
 //      Táblázatos kiírásnál kell, hogy az oszlopok ne csússzanak szét.
 string visiblePad(const string& text, std::size_t width) {
     string result = text;
-    std::size_t length = visibleLength(text);
+    std::size_t length = visibleLength(text); //! itt is utils.cpp-ben írtam meg a logikát
 
     // Addig rakunk mögé szóközt, ameddig el nem érjük a kívánt szélességet
     while (length < width) {
@@ -281,33 +233,44 @@ void HighScoreTable::reset() {
     save();
 }
 
+
+// CÉL: Két dicsőséglista bejegyzés rendezése nyeremény szerint csökkenő sorrendbe
+bool higherScore(const HighScoreEntry& a, const HighScoreEntry& b) {
+    return a.getPrize() > b.getPrize();
+}
+
+
 // CÉL: Dicsőséglista rendezett kiírása a konzolra
 void HighScoreTable::display() const {
 
     // Másolatot rendezünk, hogy az eredeti entries sorrend ne változzon
     vector<HighScoreEntry> sorted = entries;
 
-    // https://stackoverflow.com/questions/5122804/how-to-sort-with-a-lambda
-    std::sort(sorted.begin(), sorted.end(),
-              [](const HighScoreEntry& a, const HighScoreEntry& b) {
-                  return a.getPrize() > b.getPrize();
-              });
+    std::sort(sorted.begin(), sorted.end(), higherScore);
 
     //? HEADER
-    cout << Color::BOLD_YELLOW << "                     ─── DICSŐSÉGLISTA ───\n" << Color::RESET;
-    cout << SEP << "\n";
+    cout << Color::BOLD_YELLOW
+         << "                     ─── DICSŐSÉGLISTA ───\n"
+         << Color::RESET;
 
-    cout << "  " << visiblePad("#",         5)
-                << visiblePad("Játékos",   22)
-                << visiblePad("Nyeremény", 16)
-                << "Dátum\n";
+    printSeparator();
 
-    cout << SEP << "\n";
+    int NUMBER_WIDTH = 5;
+    int NAME_WIDTH   = 22;
+    int PRIZE_WIDTH  = 16;
+    
+    cout << "  "
+    << visiblePad("#",         NUMBER_WIDTH)
+    << visiblePad("Játékos",   NAME_WIDTH)
+    << visiblePad("Nyeremény", PRIZE_WIDTH)
+    << "Dátum\n";
+
+    printSeparator();
 
     // Ha még nincs eredmény, akkor is szép táblát írunk ki
     if (sorted.empty()) {
         cout << "  Még nincs mentett eredmény.\n";
-        cout << SEP << "\n";
+        printSeparator();
         return;
     }
 
@@ -320,14 +283,17 @@ void HighScoreTable::display() const {
         // Nyeremény szöveg, pld: 1.500.000 Ft
         string prizeText = formatPrize(sorted[i].getPrize()) + " Ft";
 
-        cout << "  " << visiblePad(std::to_string(i + 1) + ".", 5)
-                    << visiblePad(name, 22)
-                    << Color::BOLD_GREEN
-                    << visiblePad(prizeText, 16)
-                    << Color::RESET
-                    << sorted[i].getDate()
-                    << "\n";
+        cout << "  "
+        << visiblePad(std::to_string(i + 1) + ".", NUMBER_WIDTH)
+        << visiblePad(name, NAME_WIDTH)
+
+        << Color::BOLD_GREEN
+        << visiblePad(prizeText, PRIZE_WIDTH)
+        << Color::RESET
+
+        << sorted[i].getDate()
+        << "\n";
     }
 
-    cout << SEP << "\n";
+    printSeparator();
 }

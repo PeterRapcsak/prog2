@@ -393,25 +393,8 @@ string Game::getPlayerName() {
 
         if (name.empty()) return "Jatekos";
 
-        // UTF-8 kompatibilis hossz check
-        // https://www.daniweb.com/programming/software-development/threads/474127/reading-and-checking-unusual-characters
-        std::size_t visLen = 0;
-
-        for (std::size_t i = 0; i < name.size(); ++i) {
-            unsigned char c = static_cast<unsigned char>(name[i]);
-
-
-            // 0xC0 = 11000000
-            // 0x80 = 10000000
-            if ((c & 0xC0) != 0x80) {
-                ++visLen;
-            }
-            
-            // Őszintén fogalmam sincs hogy csinalja ezt :<
-            //* Mostmár értem
-        }
-
-        if (visLen > 20) {
+        //! A logika itt az utils.cpp-ben van
+        if (visibleLength(name) > 20) {
             cout << Color::BOLD_RED << "A játékos neve túl hosszú! (max 20 karakter)\n" << Color::RESET;
             continue;
         }

@@ -1,9 +1,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <cstddef>
 #include <iostream> 
 #include <limits>
 #include <random>
+#include <string>
 #include "memtrace.h"
 
 #include "colors.h"
@@ -53,6 +55,9 @@ void printLevelHeader(int level);
 
 // CÉL: Minden input-ot nagybetűsítünk
 void normalizeInput(string& input);
+
+// CÉL: UTF-8 string látható hosszának kiszámolása
+std::size_t visibleLength(const string& text);
 
 // Visszaadja hogy a játékos nem elrejtett választ választott
 bool isHiddenBy5050(int selectedIndex, int hidden0, int hidden1);

@@ -117,6 +117,23 @@ void normalizeInput(string& input) {
     }
 }
 
+// CÉL: UTF-8 string látható hosszának kiszámolása
+std::size_t visibleLength(const string& text) {
+    std::size_t length = 0;
+
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        unsigned char c = static_cast<unsigned char>(text[i]);
+
+        // 0xC0 = 11000000
+        // 0x80 = 10000000
+        if ((c & 0xC0) != 0x80) {
+            ++length;
+        }
+    }
+
+    return length;
+}
+
 // Visszaadja hogy a játékos nem elrejtett választ választott
 bool isHiddenBy5050(int selectedIndex, int hidden0, int hidden1) {
     return selectedIndex == hidden0 || selectedIndex == hidden1;
