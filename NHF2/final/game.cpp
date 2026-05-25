@@ -100,6 +100,7 @@ QuestionType pickQuestionType(int mode, bool hasChoose, bool hasOrder, int level
 }
 
 // CÉL: Kiírja a játék kimenetelét (megállt, nyert, veszített) és a nyereményt
+//! ITT LEHETNE GAMESTATE-ET IS HASZNÁLNI!!!
 void printGameResult(
     bool walkAway,              // Megállt?
     bool gameOver,              // Játék loop vége?
@@ -131,6 +132,7 @@ void printGameResult(
 Game::Game() {
     hasChoose = false; // Létezik feleletválasztós kérdés?
     hasOrder  = false; // Létezik sorrendezős kérdés?
+
     state.walkAway = false;
     state.gameOver = false;
     state.used5050 = false;
@@ -354,6 +356,7 @@ void Game::play(int mode) {
     // Játék vége: képernyő törlése, eredmény kiírása, pontszám mentése
     clearScreen();
 
+    //! EZT IS LEHETNE STATE-TEL
     printGameResult(
         state.walkAway,
         state.gameOver,
@@ -397,6 +400,9 @@ string Game::getPlayerName() {
         for (std::size_t i = 0; i < name.size(); ++i) {
             unsigned char c = static_cast<unsigned char>(name[i]);
 
+
+            // 0xC0 = 11000000
+            // 0x80 = 10000000
             if ((c & 0xC0) != 0x80) {
                 ++visLen;
             }
