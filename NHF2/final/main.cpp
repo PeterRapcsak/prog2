@@ -10,9 +10,10 @@
     //! g++ -std=c++11 -Wall -Wextra -DMEMTRACE -o loim main.cpp game.cpp highscore.cpp question.cpp filemanager.cpp test.cpp memtrace.cpp utils.cpp
 ======================================================================*/
 
-#include "memtrace.h" // memóriaszivárgás check
-
 #include "game.h"
+
+//! memtrace.h include-okat lentebb vittem, mert valamiért nem fordult le
+#include "memtrace.h" // memóriaszivárgás check
 
 // teszteléshez, később törölhető
 int tesztelek(bool run);

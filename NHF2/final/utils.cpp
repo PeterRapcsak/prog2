@@ -1,10 +1,11 @@
+#include "utils.h"
+#include "colors.h"
+
 #include <iostream> 
 #include <limits>
 #include <random>
-#include "memtrace.h"
 
-#include "colors.h"
-#include "utils.h"
+#include "memtrace.h"
 
 using std::string;
 using std::cout;

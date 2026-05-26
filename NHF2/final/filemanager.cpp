@@ -7,11 +7,11 @@
      - ";" csekkolás és hibás sorok kezelése
 ======================================================================*/
 
-#include "memtrace.h" // memóriaszivárgás check
-
 #include "filemanager.h"
 #include <fstream>      // file olvasás
 #include <sstream>      // string darabolás (könnyen)
+
+#include "memtrace.h" // memóriaszivárgás check
 
 // Egyesével importáljuk, hogy ne kelljen mindenhol std::-t írni
 // ÉS nincs namespace clutter

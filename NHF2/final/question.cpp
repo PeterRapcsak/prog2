@@ -19,8 +19,6 @@
          - itt nincs segítség
 ======================================================================*/
 
-#include "memtrace.h" // memóriaszivárgás check
-
 #include "question.h"
 #include "gamestate.h" // GameState struct
 #include "colors.h"
@@ -29,6 +27,8 @@
 
 #include <iostream> // konzol kiírás
 #include <algorithm> // shuffle
+
+#include "memtrace.h" // memóriaszivárgás check
 
 using std::string;
 using std::vector;

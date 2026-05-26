@@ -21,8 +21,6 @@
      - UTF-8 karakterek kezelése a táblázatos kiírásnál
 ======================================================================*/
 
-#include "memtrace.h" // memóriaszivárgás check
-
 #include "highscore.h"
 #include "colors.h"
 #include "utils.h"
@@ -35,6 +33,8 @@
 #include <fstream>   // ifstream, ofstream
 #include <iostream>  // konzol kiírás
 #include <sstream>   // stringstream
+
+#include "memtrace.h" // memóriaszivárgás check
 
 using std::string;
 using std::vector;

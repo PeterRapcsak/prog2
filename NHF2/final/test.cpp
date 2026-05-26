@@ -6,7 +6,14 @@
      - Betöltés és statikus segédfüggvények kipróbálása (olykor rossz inputokkal is)
 ======================================================================*/
 
-#include "memtrace.h" // memóriaszivárgás check
+#include <vector>
+#include <iostream>
+
+#include "filemanager.h"
+#include "game.h"
+#include "highscore.h"
+#include "question.h"
+#include "utils.h"
 
 #include "gtest_lite.h" //gtest_lite használata a tesztekhez
 
@@ -17,15 +24,6 @@
     EXPECT_GT       | greater than teszt
     EXPECT_NO_THROW | nem dob kivételt teszt
 */
-
-#include <vector>
-#include <iostream>
-
-#include "filemanager.h"
-#include "game.h"
-#include "highscore.h"
-#include "question.h"
-#include "utils.h"
 
 using std::string;
 

@@ -12,8 +12,6 @@
      - Játékos neve, aktuális szint, végső nyeremény kezelése
 ======================================================================*/
 
-#include "memtrace.h" // memóriaszivárgás check
-
 #include "game.h"
 #include "filemanager.h"
 #include "colors.h"
@@ -26,6 +24,8 @@
 #include <iostream>  // konzol kiírás / bemenet
 #include <limits>    // numeric_limits
 #include <random>    // mt19937
+
+#include "memtrace.h" // memóriaszivárgás check
 
 using std::string;
 using std::vector;

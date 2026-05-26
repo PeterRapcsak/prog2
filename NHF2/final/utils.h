@@ -6,7 +6,6 @@
 #include <limits>
 #include <random>
 #include <string>
-#include "memtrace.h"
 
 #include "colors.h"
 
